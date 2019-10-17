@@ -135,6 +135,9 @@ function handleKeyRelease(data) {
 function changeNotification(notification) {
   console.log(notification);
   noteText = notification.message;
+  state = 'idle';
+  socket = io.connect('/');
+  console.log(socket);
 }
 
 function showWaiting(data) {
@@ -152,13 +155,17 @@ function initGame(playerIds) {
 
   ball = getBall({x:width/2, y:height/2});
   state = 'running';
-
-  screenText = game_id.toString();
+  screenText = '';
 }
 
 // player 0 is always master, must change later
 function isMaster() {
-  return player_id === players[0].id;
+  if (state === 'running') {
+    return player_id === players[0].id;
+  }
+
+  return true;
+  
 }
 
 function changePosition(data) {

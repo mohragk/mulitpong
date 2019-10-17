@@ -42,9 +42,10 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('leave', function() {
+        console.log('player has left the building');
         if(users[socket.id].inGame !== null) {
-          leaveGame(socket);
-    
+         // leaveGame(socket);
+        
           socket.join('waiting room');
           createGameForWaiting();
         }
@@ -89,7 +90,7 @@ function createGameForWaiting() {
 
     // must change to support more than 2 players!
     if (players.length >= 2) {
-        console.log('Enough players!');
+       
         let game = new Game(gameCounter++, players[0].id, players[1].id);
         
         players[0].leave('waiting room');
@@ -128,7 +129,9 @@ function leaveGame(socket) {
         checkGameOver(users[socket.id].inGame);
       }
       */
-      
+     
+     
+
       // leave the current room
       socket.leave(room);
   
@@ -141,10 +144,12 @@ function leaveGame(socket) {
 
 function getClientsForRoom(room) {
     var clients = [];
-
-    for(let id in io.sockets.adapter.rooms[room].sockets) {
-        clients.push(allClients[id]);
+    if ( io.sockets.adapter.rooms[room].sockets) {
+        for(let id in io.sockets.adapter.rooms[room].sockets) {
+            clients.push(allClients[id]);
+        }
     }
+    
 
     return clients;
 }
