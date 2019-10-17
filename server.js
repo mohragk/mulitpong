@@ -1,19 +1,16 @@
 const Game = require('./app/game.js');
-var express = require('express')
-var app = express()
-var port = 80;
-var server = app.listen(port);
-var io = require('socket.io')(server);
+const express = require('express');
+const app = express();
 
-
+const port = 80;
+const server = app.listen(port);
 app.use(express.static('public'));
 
-console.log('Server started');
+console.log('Server started at port: ', port);
+console.log('TEST REDHAT');
 
-
-/**
- 
-
+const socket = require('socket.io');
+const io = socket(server);
 
 let users = {};
 let gameCounter = 0;
@@ -121,7 +118,13 @@ function leaveGame(socket) {
         message: 'Opponent has left the game'
       });
   
-    
+      /*
+      if(users[socket.id].inGame.gameStatus !== GameStatus.gameOver) {
+        // Game is unfinished, abort it.
+        users[socket.id].inGame.abortGame(users[socket.id].player);
+        checkGameOver(users[socket.id].inGame);
+      }
+      */
       
       // leave the current room
       socket.leave(room);
@@ -142,6 +145,3 @@ function getClientsForRoom(room) {
 
     return clients;
 }
-
-
- */
