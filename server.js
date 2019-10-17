@@ -1,6 +1,10 @@
 const Game = require('./app/game.js');
+const express = require('express');
+const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
 
-
+/*
 const port = 80;
 
 var express = require('express')
@@ -9,7 +13,7 @@ var app = express()
 
 //http.createServer(app).listen(80)
 const server = app.listen(port);
-
+*/
 app.use(express.static('public'));
 
 console.log('Server started');
