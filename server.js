@@ -4,18 +4,16 @@ const Game = require('./app/game.js');
 const port = 3000;
 //const server = app.listen(port);
 var express = require('express')
-var https = require('https')
 var http = require('http')
 var app = express()
 
 http.createServer(app).listen(80)
-https.createServer(options, app).listen(443)
 
 
 app.use(express.static('public'));
 
 console.log('Server started');
-console.log('TEST REDHAT');
+
 
 /**
  
