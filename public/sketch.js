@@ -48,7 +48,7 @@ const getBall = (pos) => {
 function setup() {
   createCanvas(800,600);
   let url = 'http://mulitpong-server-test-mohragk.apps.us-west-2.starter.openshift-online.com';
-  //url = 'http://localhost:8080';
+  url = 'http://localhost:8080';
   socket = io.connect(url);
   socket.on('waiting', showWaiting);
   socket.on('game started', initGame);
@@ -235,9 +235,7 @@ const checkBallWalls = (ball) => {
     
     return newBall;
   } 
- // newBall = sidedBall(newBall);
- // return { newBall, newAudio } ;
-  
+
 }
 
 const overlap = (paddle, ball) => {
@@ -365,9 +363,9 @@ function updateGame(dt) {
     text('master', 40, height - 20);
     movePaddles(players,dt);
 
-    let ballDT = getDeltaTimeForBall(players);
-    moveBall(ball.direction, ball, ballDT);
-    checkBallPaddlesCollision(players, ball, dt);
+    //let ballDT = getDeltaTimeForBall(players);
+   // moveBall(ball.direction, ball, ballDT);
+    //checkBallPaddlesCollision(players, ball, dt);
   }
   
 }
