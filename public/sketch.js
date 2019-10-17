@@ -48,7 +48,7 @@ const getBall = (pos) => {
 function setup() {
   createCanvas(800,600);
 
-  socket = io.connect('http://localhost:3000');
+  socket = io.connect('http://mulitpong-server-test-mohragk.apps.us-west-2.starter.openshift-online.com/:8080');
   socket.on('waiting', showWaiting);
   socket.on('game started', initGame);
   socket.on('notification', changeNotification);
