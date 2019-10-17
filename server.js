@@ -29,6 +29,10 @@ io.sockets.on('connection', (socket) => {
         player: null
     }
 
+    socket.on('latency', (data) => {
+        socket.emit('latency', data);
+    })
+
     socket.on('disconnect', () => {
         console.log((new Date().toISOString()) + ', ID: ' + socket.id + ' disconnected.');
         
