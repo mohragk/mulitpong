@@ -1,14 +1,14 @@
 const Game = require('./app/game.js');
 
 
-const port = 3000;
-//const server = app.listen(port);
+const port = 80;
+
 var express = require('express')
 var http = require('http')
 var app = express()
 
-http.createServer(app).listen(80)
-
+//http.createServer(app).listen(80)
+const server = app.listen(port);
 
 app.use(express.static('public'));
 
