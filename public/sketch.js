@@ -47,9 +47,8 @@ const getBall = (pos) => {
 
 function setup() {
   createCanvas(800,600);
-  let url = 'http://mulitpong-server-test-mohragk.apps.us-west-2.starter.openshift-online.com';
-  //url = 'http://localhost:8080';
-  socket = io.connect(url);
+ 
+  socket = io.connect('/');
   socket.on('waiting', showWaiting);
   socket.on('game started', initGame);
   socket.on('notification', changeNotification);
@@ -57,11 +56,19 @@ function setup() {
   socket.on('keypressed', handleKeyPress);
   socket.on('keyreleased', handleKeyRelease);
 
+  socket.on('latency', measureLatency);
+
 
   socket.on('posChanged', changePosition);
   socket.on('ballPosChanged', changeBallPosition);
   state = 'idle';
   screenText = 'setup()';
+}
+
+function measureLatency(msg) {
+  var now = millis();
+  let diff = now - msg;
+  console.log('latency: ',diff);
 }
 
 function keyPressed() {
@@ -71,6 +78,9 @@ function keyPressed() {
     keyCode: keyCode
   }
   socket.emit('keypressed', msg);
+
+  //LATENCY
+  socket.emit('latency', millis());
 }
 
 function keyReleased() {
@@ -79,6 +89,8 @@ function keyReleased() {
     keyCode: keyCode
   }
   socket.emit('keyreleased', msg);
+
+  
 }
 
 function handleKeyPress(data) {
@@ -102,10 +114,7 @@ function handleKeyPress(data) {
 }
 
 function handleKeyRelease(data) {
-  console.log(data);
   let factor = 0;
-
-  
   if (data.keyCode == UP_ARROW) {
     factor = 1;
   } else if (data.keyCode == DOWN_ARROW) {
@@ -135,7 +144,7 @@ function showWaiting(data) {
 
 function initGame(playerIds) {
   
-  screenText = '';
+  
   players[0] = getPaddle(playerIds.p1, {x: width/8, y:height/2});
   players[1] = getPaddle(playerIds.p2, {x: width - (width/8), y:height/2});
 
@@ -143,6 +152,8 @@ function initGame(playerIds) {
 
   ball = getBall({x:width/2, y:height/2});
   state = 'running';
+
+  screenText = game_id.toString();
 }
 
 // player 0 is always master, must change later
@@ -363,9 +374,9 @@ function updateGame(dt) {
     text('master', 40, height - 20);
     movePaddles(players,dt);
 
-    //let ballDT = getDeltaTimeForBall(players);
-   // moveBall(ball.direction, ball, ballDT);
-    //checkBallPaddlesCollision(players, ball, dt);
+    let ballDT = getDeltaTimeForBall(players);
+    moveBall(ball.direction, ball, ballDT);
+    checkBallPaddlesCollision(players, ball, dt);
   }
   
 }

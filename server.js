@@ -85,7 +85,7 @@ function createGameForWaiting() {
 
     // must change to support more than 2 players!
     if (players.length >= 2) {
-        
+        console.log('Enough players!');
         let game = new Game(gameCounter++, players[0].id, players[1].id);
         
         players[0].leave('waiting room');
