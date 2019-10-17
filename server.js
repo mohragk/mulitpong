@@ -7,7 +7,6 @@ const server = app.listen(port);
 app.use(express.static('public'));
 
 console.log('Server started at port: ', port);
-console.log('TEST REDHAT');
 
 const socket = require('socket.io');
 const io = socket(server);
