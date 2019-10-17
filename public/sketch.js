@@ -47,8 +47,9 @@ const getBall = (pos) => {
 
 function setup() {
   createCanvas(800,600);
-
-  socket = io.connect('http://mulitpong-server-test-mohragk.apps.us-west-2.starter.openshift-online.com/:8080');
+  let url = 'http://mulitpong-server-test-mohragk.apps.us-west-2.starter.openshift-online.com';
+  //url = 'http://localhost:8080';
+  socket = io.connect(url);
   socket.on('waiting', showWaiting);
   socket.on('game started', initGame);
   socket.on('notification', changeNotification);
@@ -60,6 +61,7 @@ function setup() {
   socket.on('posChanged', changePosition);
   socket.on('ballPosChanged', changeBallPosition);
   state = 'idle';
+  screenText = 'setup()';
 }
 
 function keyPressed() {
