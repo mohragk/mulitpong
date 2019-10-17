@@ -1,19 +1,11 @@
 const Game = require('./app/game.js');
-const express = require('express');
-const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
-
-/*
-const port = 80;
-
 var express = require('express')
-var http = require('http')
 var app = express()
+var port = 80;
+var server = app.listen(port);
+var io = require('socket.io')(server);
 
-//http.createServer(app).listen(80)
-const server = app.listen(port);
-*/
+
 app.use(express.static('public'));
 
 console.log('Server started');
@@ -21,8 +13,7 @@ console.log('Server started');
 
 /**
  
-const socket = require('socket.io');
-const io = socket(server);
+
 
 let users = {};
 let gameCounter = 0;
