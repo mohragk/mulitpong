@@ -1,4 +1,7 @@
+const UUID = require('uuid/v4');
+const Simulator = require('./public/simulator.js');
 const Game = require('./app/game.js');
+
 const express = require('express');
 const app = express();
 
@@ -11,6 +14,7 @@ console.log('Server started at port: ', port);
 const socket = require('socket.io');
 const io = socket(server);
 
+
 let users = {};
 let gameCounter = 0;
 let allClients = {};
@@ -18,7 +22,7 @@ let allClients = {};
 io.sockets.on('connection', (socket) => {
     console.log((new Date().toISOString()) + ', ID: ' + socket.id + ' connected.');
 
-
+    
     socket.emit('waiting', socket.id);
     socket.join('waiting room');
 
@@ -26,11 +30,12 @@ io.sockets.on('connection', (socket) => {
 
     users[socket.id] = {
         inGame: null,
-        player: null
+        player: null,
+        simulator: null
     }
 
-    socket.on('latency', (data) => {
-        socket.emit('latency', data);
+    socket.on('serverupdate', (msg) => {
+        console.log(msg);
     })
 
     socket.on('disconnect', () => {
@@ -52,35 +57,20 @@ io.sockets.on('connection', (socket) => {
       });
 
     socket.on('keypressed', (data) => {
-        var game = users[socket.id].inGame;
-        if (game !== null) {
-            io.to('game_room'+game.game_ID).emit('keypressed', data);
+        var sim = users[socket.id].simulator;
+        if (sim !== null ) {
+            sim.handleKeyPress(data);
         }
     })
 
     socket.on('keyreleased', (data) => {
-        var game = users[socket.id].inGame;
-        if (game !== null) {
-            io.to('game_room'+game.game_ID).emit('keyreleased', data);
+        var sim = users[socket.id].simulator;
+        if (sim !== null ) {
+            sim.handleKeyReleased(data);
         }
     })
 
   
-    socket.on('posChanged', (data) => {
-        var game = users[socket.id].inGame;
-        if(game !== null) {
-            io.to('game_room'+game.game_ID).emit('posChanged', data);
-        }
-        
-    })
-
-    socket.on('ballPosChanged', (data) => {
-        var game = users[socket.id].inGame;
-        if(game !== null) {
-            io.to('game_room'+game.game_ID).emit('ballPosChanged', data);
-        }
-        
-    })
    
     createGameForWaiting();
 });
@@ -91,7 +81,10 @@ function createGameForWaiting() {
     // must change to support more than 2 players!
     if (players.length >= 2) {
        
-        let game = new Game(gameCounter++, players[0].id, players[1].id);
+        let game_uuid = UUID();
+        let game = new Game(game_uuid, players[0].id, players[1].id);
+        let sim = new Simulator(game.game_ID, players[0].id, players[1].id, io);
+       
         
         players[0].leave('waiting room');
         players[1].leave('waiting room');
@@ -100,15 +93,20 @@ function createGameForWaiting() {
 
         users[players[0].id] = {
             inGame: game,
-            player: 0
+            player: 0,
+            simulator: sim
         };
 
         users[players[1].id] = {
             inGame: game,
-            player: 1
+            player: 1,
+            simulator: sim
         };
 
-        io.to('game_room'+game.game_ID).emit('game started', {game_id: game.game_ID, p1: players[0].id, p2: players[1].id });
+       // io.to('game_room'+game.game_ID).emit('game started', {game_id: game.game_ID, p1: players[0].id, p2: players[1].id });
+        io.to('game_room'+game.game_ID).emit('joinedgame', {game_id: game.game_ID, client_id:players[0].id, host_id:players[1].id});
+
+        sim.start(players[0].id, players[1].id);
     }
 }
 
@@ -122,21 +120,13 @@ function leaveGame(socket) {
         message: 'Opponent has left the game'
       });
   
-      /*
-      if(users[socket.id].inGame.gameStatus !== GameStatus.gameOver) {
-        // Game is unfinished, abort it.
-        users[socket.id].inGame.abortGame(users[socket.id].player);
-        checkGameOver(users[socket.id].inGame);
-      }
-      */
-     
-     
 
       // leave the current room
       socket.leave(room);
   
       users[socket.id].inGame = null;
       users[socket.id].player = null;
+      users[socket.id].simulator = null;
   
       io.to(socket.id).emit('leave');
     }

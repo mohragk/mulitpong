@@ -1,3 +1,4 @@
+
 let socket;
 let screenText = '';
 let noteText = '';
@@ -5,45 +6,7 @@ let players = [];
 let player_id;
 let game_id;
 let state = 'idle';
-let ball;
-
-const getPaddle = (id, pos) => {
-  return (
-    {
-      id: id,
-      w: 10, 
-      h: 100, 
-      pos: {
-        x: pos.x, 
-        y: pos.y
-      } ,
-
-      old_pos: {
-        x: pos.x, 
-        y: pos.y
-      } ,
-      direction: 0,
-      velocity: {x:0, y:0},
-      acceleration: 7000,
-      score: 0
-    }
-  )
-} ;
-
-const getBall = (pos) => {
-  return (
-    {
-      radius: 10,
-      velocity: 180,
-      direction: createVector(1,0),
-      pos: {
-        x: pos.x,
-        y: pos.y
-      },
-      side: ''
-    }
-  )
-};
+let simulator;
 
 function setup() {
   createCanvas(800,600);
@@ -56,20 +19,25 @@ function setup() {
   socket.on('keypressed', handleKeyPress);
   socket.on('keyreleased', handleKeyRelease);
 
-  socket.on('latency', measureLatency);
-
+  socket.on('joinedgame', initSimulator)
 
   socket.on('posChanged', changePosition);
   socket.on('ballPosChanged', changeBallPosition);
   state = 'idle';
   screenText = 'setup()';
+
+  
+  
 }
 
-function measureLatency(msg) {
-  var now = millis();
-  let diff = now - msg;
-  console.log('latency: ',diff);
+
+function initSimulator(msg) {
+  simulator = new Simulator(msg.game_id);
+  simulator.start();
+  
+
 }
+
 
 function keyPressed() {
   
