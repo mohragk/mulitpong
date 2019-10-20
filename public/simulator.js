@@ -201,34 +201,18 @@ Simulator.prototype.send_state = function(dt) {
     };
     */
 
-    let  server_state = {
-        time: 0,
-        paddles: {},
-        his: -1,
-        cis: -1,
-    };  // <- initialize an object, not an array
+    
     
     
     if(typeof this.io !== 'undefined') {
 
+        let  server_state = {
+            time: 0,
+            paddles: {},
+        };  // <- initialize an object, not an array
 
-        server_state.paddles[this.host_id] = this.paddles[this.host_id].pos;
-        server_state.paddles[this.client_id] = this.paddles[this.client_id].pos;
-
-
-        let input_buffer_host = this.input_buffer.filter((input) => {
-            return input.id === this.host_id
-        });
-
-        if (input_buffer_host[0]) this.last_input_seq_host = input_buffer_host[0].seq;
-        server_state.his = this.last_input_seq_host;
-
-        let input_buffer_client = this.input_buffer.filter((input) => {
-            return input.id === this.client_id
-        });
-
-        if (input_buffer_client[0]) this.last_input_seq_client = input_buffer_client[0].seq;
-        server_state.cis = this.last_input_seq_client;
+        server_state.paddles[this.host_id] = this.paddles[this.host_id];
+        server_state.paddles[this.client_id] = this.paddles[this.client_id];
         
         server_state.time = new Date().getTime().fixed(4);
 

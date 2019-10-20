@@ -8,21 +8,21 @@ let simulator;
 let state = 'idle';
 
 let player_id;
+let other_id;
 let host_id;
 let client_id;
 
 let server_updates = [];
 //let input_seq = 0; 
-var my_server_pos = 0;
+var my_server_pos_y = 0;
 
 let latency = 0;
 let history = [];
 
-
+let animator;
 
 
 let div;
-let animatePlayer;
 const f_lerp = (y1, y2, mu) => {
     return(y1*(1.0-mu)+y2*mu);
  }
@@ -104,9 +104,11 @@ const initSimulator = (data) => {
     state= 'running';
     host_id = data.host_id;
     client_id = data.client_id;
+
+    other_id = (host_id === player_id) ? client_id : host_id;
     simulator.start(host_id, client_id);
 
-    animatePlayer = new Animate(simulator.paddles[player_id], 0, 0, 1);
+    animator = new Animate(simulator.paddles[other_id], 0, 0, 1);
 
     let t = new Date().getTime();
     socket.emit('pingserver', {time:t})
@@ -114,25 +116,19 @@ const initSimulator = (data) => {
 }
 
 const handleServerUpdate = (server_state) => {
-    //The most recent server update
-    let latest_server_data = server_state;
-   
 
-    // @Todo: immediate correct other players?
-    let other_id = player_id == host_id ? client_id : host_id;
-    simulator.paddles[other_id].pos.y = latest_server_data.paddles[other_id].y;
+    // Predict player position and correct with server data
+    correctPosition(server_state);
 
-
-    correctPosition(latest_server_data);
+    // Interpolate other entities position.
+    interpolateOtherEntities(server_state);
 }  
-    
-
-
     
 
 
 function correctPosition(server_state) {
 
+    latency =  server_state.time - ( new Date().getTime() );
 
     // get the total time that is saved in the history,
     let history_time = (history.length) ? history.reduce((a, b) => ({dt: a.dt + b.dt})).dt : 0;
@@ -147,15 +143,15 @@ function correctPosition(server_state) {
 
     
     //Our latest server position
-    my_server_pos = server_state.paddles[player_id].y;
+    my_server_pos_y = server_state.paddles[player_id].pos.y;
 
-     //Update the debug server position block
-     simulator.ghosts[player_id].pos.y = my_server_pos;
+    //Update the debug server position block
+    simulator.ghosts[player_id].pos.y = my_server_pos_y;
 
     // call the simulator solvePaddle function, with our actual, 
-    // historical position and apply history
+    // historical position and apply 
     let adjusted_paddle = cloneObject(simulator.paddles[player_id] );
-    adjusted_paddle.pos.y = my_server_pos;
+    adjusted_paddle.pos.y = my_server_pos_y;
    
     const solveDeltaPosition = (paddle, acc, vel, dir, dt) => {
        
@@ -198,28 +194,12 @@ Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixe
 
 
 
-function smoothlyCorrectPosition(server_pos) {
-    let client_pos = simulator.paddles[player_id].pos.y;
+function interpolateOtherEntities(server_state) {
 
-    let margin = 1;
+    let current_pos_y = simulator   .paddles[other_id].pos.y;
+    let server_pos_y  = server_state.paddles[other_id].pos.y;
 
-    if( Math.abs(client_pos - server_pos) > margin ) {
-        let client_pos = simulator.paddles[player_id].pos;
-        if (animatePlayer.state !== 'animating') {
-            
-            
-            animatePlayer.duration = 100;
-            animatePlayer.resetPoints(client_pos, {x:client_pos.x, y:server_pos});
-            animatePlayer.start();
-        }  else if (keyIsDown(38) || keyIsDown(40) ) {
-            animatePlayer.endPos = client_pos;
-        }
-        
-         else {
-            animatePlayer.endPos = {x:client_pos.x, y:server_pos};
-            
-        }
-    }
+    simulator.paddles[other_id].pos.y = server_pos_y;
     
 }
 
@@ -378,6 +358,6 @@ function draw() {
         stroke(180);
         rect(ghost.pos.x, ghost.pos.y, ghost.w, ghost.h);
     }
-    if(animatePlayer) animatePlayer.update(60/1000)
+    if(animator) animator.update(60/1000)
     div.html('<p>'+displayText+'</p>');
 }
