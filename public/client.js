@@ -206,6 +206,8 @@ function interpolateOtherEntities(server_state) {
     let server_pos_y  = server_state.paddles[other_id].pos.y;
 
     simulator.paddles[other_id].pos.y = server_pos_y;
+
+    simulator.ball.pos = cloneObject(server_state.ball.pos);
     
 }
 
@@ -352,20 +354,34 @@ function update(dt) {
     */
 }
 
+
+const drawPaddle = (paddle) => {
+    fill(255);
+    rectMode(CENTER);
+    rect(paddle.pos.x, paddle.pos.y, paddle.w, paddle.h);
+
+    //debug
+    text(paddle.pos.y, paddle.pos.x, 20);
+}
+
+
+const drawBall = (ball) => {
+    fill(255);
+    rectMode(CENTER);
+    rect(ball.pos.x, ball.pos.y, ball.radius, ball.radius);
+
+}
+
 function draw() {
     background(10);
     if (state === 'running') {
 
-        const drawPaddle = (paddle) => {
-            fill(255);
-            rectMode(CENTER);
-            rect(paddle.pos.x, paddle.pos.y, paddle.w, paddle.h);
 
-            //debug
-            text(paddle.pos.y, paddle.pos.x, 20);
-        }
+
         drawPaddle(simulator.paddles[host_id] );
         drawPaddle(simulator.paddles[client_id] );
+
+        drawBall(simulator.ball);
 
         //also, save a history
         let player_paddle = simulator.paddles[player_id];

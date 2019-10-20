@@ -13,6 +13,7 @@ var Simulator = function(id, player_id, client_id, io) {
     };
     this.paddles = [];
     this.ghosts = [];
+    this.ball;
 
     this.debug_text = '';
     this.socket;
@@ -104,18 +105,35 @@ Simulator.prototype.getPaddle = function(id,pos) {
         }
       )
 };
-/*
+
+Simulator.prototype.getBall = (pos) => {
+  return (
+    {
+      radius: 10,
+      velocity: 800,
+      direction: {x:1, y:0},
+      pos: {
+        x: pos.x,
+        y: pos.y
+      },
+      side: ''
+    }
+  )
+};
 
 
-*/
 Simulator.prototype.start = function(host_id, client_id) {
    
     this.host_id = host_id;
     this.client_id = client_id;
+    
     this.paddles[host_id] = this.getPaddle(host_id, {x:this.world.width/8, y:this.world.height/2});
     this.paddles[client_id] = this.getPaddle(client_id, {x:this.world.width - (this.world.width/8), y:this.world.height/2});
     this.ghosts[host_id] = this.getPaddle(host_id, {x:this.world.width/8, y:this.world.height/2});
     this.ghosts[client_id] = this.getPaddle(client_id, {x:this.world.width - (this.world.width/8), y:this.world.height/2});
+
+    this.ball = this.getBall({x:this.world.width/2, y:this.world.height/2});
+
     if (typeof global !== 'undefined') {
         
         this._serverIntervalId = setInterval(this.send_state.bind(this), 16); 
@@ -138,17 +156,11 @@ Simulator.prototype.start = function(host_id, client_id) {
 
 Simulator.prototype.handleKeyPress = function(input) {
     //if(this.paddles.length == 0) return;
-
-   
-
     this.input_buffer.push( input );
-
-
-    
+ 
 };
 
 Simulator.prototype.handleKeyReleased = function(input) {
-    
     
     this.input_buffer = this.input_buffer.filter((the_input) => {
         return the_input.d == input.id && the_input.keyCode == input.keyCode;
@@ -197,12 +209,17 @@ Simulator.prototype.send_state = function(dt) {
         let  server_state = {
             time: 0,
             paddles: {},
+            ball: {}
         };  // <- initialize an object, not an array
 
         server_state.paddles[this.host_id]   = this.paddles[this.host_id];
         server_state.paddles[this.client_id] = this.paddles[this.client_id];
         
+        server_state.ball = this.ball;
+        
         server_state.time = new Date().getTime().fixed(4);
+
+
 
         let state = JSON.stringify(server_state); // "{"a":"The letter A"}"
         
@@ -244,6 +261,10 @@ Simulator.prototype.update = function(dt) {
     while(steps > 0) {
         this.paddles[this.host_id]   = this.solvePaddle(this.paddles[this.host_id], dt);
         this.paddles[this.client_id] = this.solvePaddle(this.paddles[this.client_id], dt);
+
+        this.ball = this.moveBall(this.ball.direction, this.ball, dt);
+        this.ball = this.checkBallWalls(this.ball, this.world);
+
         steps--;
     }
 };
@@ -271,6 +292,31 @@ Simulator.prototype.checkPaddleOOB = (paddle, world) => {
     return newPaddle;
     
 }
+
+Simulator.prototype.checkBallWalls = (ball, world) => { 
+    let newBall = ball;
+
+    if(newBall.pos.y < newBall.radius/2 || newBall.pos.y > world.height - newBall.radius/2) {
+        newBall.direction.y *= -1;
+    }
+
+    if(newBall.pos.x < newBall.radius/2 || newBall.pos.x > world.width - newBall.radius/2) {
+        newBall.direction.x *= -1;
+    }
+
+    return newBall;
+}
+
+Simulator.prototype.moveBall = (direction, ball, dt) => {
+    let newBall = ball;
+    
+    newBall.direction = direction;
+    newBall.pos.x = newBall.pos.x + newBall.velocity * direction.x * dt;
+    newBall.pos.y = newBall.pos.y + newBall.velocity * direction.y * dt;
+    
+    return newBall;
+  }
+  
 
 
 
