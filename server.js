@@ -1,6 +1,16 @@
+
+var LOG_PREFIX = "[Server]";
+var TextStuff = require('./logger.js');
+
+let Logger = TextStuff.Logger;
+let logger = new Logger(LOG_PREFIX);
+const make_yellow = TextStuff.make_yellow;
+const make_green = TextStuff.make_green;
+const dim = TextStuff.dim;
+
+
 const UUID = require('uuid/v4');
 const Simulator = require('./public/simulator.js');
-const Game = require('./app/game.js');
 
 const express = require('express');
 const app = express();
@@ -20,18 +30,11 @@ let allClients = {};
 
 
 
-var LOG_PREFIX = "[Server]";
-var TextStuff = require('./logger.js');
-
-let Logger = TextStuff.Logger;
-let logger = new Logger(LOG_PREFIX);
-const make_yellow = TextStuff.make_yellow;
-const make_green = TextStuff.make_green;
-const dim = TextStuff.dim;
-
-let fake_latency = 0;
+let fake_latency = 46;
 
 logger.log('Server started at port: ', port);
+
+
 
 
 io.sockets.on('connection', (socket) => {
@@ -116,12 +119,16 @@ function createGameForWaiting() {
         let game_uuid = UUID();
         //let game = new Game(game_uuid, players[0].id, players[1].id);
         let sim = new Simulator(game_uuid, players[0].id, players[1].id, io);
-        sim.start(players[0].id, players[1].id);
+        
         
         players[0].leave('waiting room');
         players[1].leave('waiting room');
         players[0].join('game_room'+sim.id);
         players[1].join('game_room'+sim.id);
+
+        io.to('game_room'+sim.id).emit('joinedgame', {game_id: sim.id, client_id:players[0].id, host_id:players[1].id});
+
+        sim.start(players[0].id, players[1].id);
 
         users[players[0].id] = {
             player: 0,
@@ -135,9 +142,7 @@ function createGameForWaiting() {
 
         logger.log('sim: ', dim(sim.id), make_green(' created'), ' and', make_green(' joined') )
 
-        io.to('game_room'+sim.id).emit('joinedgame', {game_id: sim.id, client_id:players[0].id, host_id:players[1].id});
-
-        
+       
         
     }
 

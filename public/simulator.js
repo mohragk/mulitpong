@@ -191,7 +191,7 @@ Simulator.prototype.send_state = function(dt) {
         
         server_state.time = new Date().getTime().fixed(4);
 
-        //let state = JSON.stringify(server_state); // "{"a":"The letter A"}"
+        let state = JSON.stringify(server_state); // "{"a":"The letter A"}"
         this.io.to('game_room'+this.id).emit('serverupdate', server_state);
     }
 }
