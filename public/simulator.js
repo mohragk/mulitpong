@@ -1,5 +1,9 @@
+const remap = function(n, start1, stop1, start2, stop2) {
+    return ((n-start1)/(stop1-start1))*(stop2-start2)+start2;
+  };
 
 
+  const PI = 3.14159265359
 
 var Simulator = function(id, player_id, client_id, io) {
     
@@ -264,17 +268,18 @@ Simulator.prototype.update = function(dt) {
 
         this.ball = this.moveBall(this.ball.direction, this.ball, dt);
         this.ball = this.checkBallWalls(this.ball, this.world);
+        this.ball = this.checkBallPaddlesCollision(this.paddles, this.ball, dt);
 
         steps--;
     }
 };
 
-Simulator.prototype.solvePosition = (pos, vel, acc, dt) => {
+Simulator.prototype.solvePosition = function(pos, vel, acc, dt)  {
     return pos + vel * dt + ((acc * (dt*dt)) / 2);
 };
 
 
-Simulator.prototype.checkPaddleOOB = (paddle, world) => {
+Simulator.prototype.checkPaddleOOB = function(paddle, world) {
     let height = world.height;
     let newPaddle = paddle;
     
@@ -293,7 +298,7 @@ Simulator.prototype.checkPaddleOOB = (paddle, world) => {
     
 }
 
-Simulator.prototype.checkBallWalls = (ball, world) => { 
+Simulator.prototype.checkBallWalls = function(ball, world) { 
     let newBall = ball;
 
     if(newBall.pos.y < newBall.radius/2 || newBall.pos.y > world.height - newBall.radius/2) {
@@ -307,7 +312,7 @@ Simulator.prototype.checkBallWalls = (ball, world) => {
     return newBall;
 }
 
-Simulator.prototype.moveBall = (direction, ball, dt) => {
+Simulator.prototype.moveBall = function (direction, ball, dt) {
     let newBall = ball;
     
     newBall.direction = direction;
@@ -318,7 +323,133 @@ Simulator.prototype.moveBall = (direction, ball, dt) => {
   }
   
 
+Simulator.prototype.overlap = function(paddle, ball) {
+    let test = false;
+    let newBall = ball;
+    let newPaddle = paddle;
+     
+    if (  newBall.pos.x - (0.5*newBall.radius) < newPaddle.pos.x + (0.5*newPaddle.w) &&
+          newBall.pos.x + (0.5*newBall.radius) > newPaddle.pos.x - (0.5*newPaddle.w) ) 
+    {
+      if (  newBall.pos.y + (0.5*newBall.radius) > newPaddle.pos.y - (0.5*newPaddle.h) &&
+            newBall.pos.y - (0.5*newBall.radius) < newPaddle.pos.y + (0.5*newPaddle.h) )
+      {
+          test = true;
+      }
+    }
+    
+    
+    return test;
+  }
+  
+  
+Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
+    let newBall = ball;
+    
+    const getBounceDirection = (paddle, ball) => {
+    // map output dir to where paddle is hitExternal
 
+        const fromAngle = (angle, length) => {
+            if (typeof length === 'undefined') {
+                length = 1;
+            }
+            return {x: length * Math.cos(angle), y:length * Math.sin(angle) };
+        };
+        
+        let ball_y = ball.pos.y;
+        let padd_y = paddle.pos.y;
+        let lim = 0.5 * paddle.h;
+        
+        let paddleLerp = remap(ball_y, padd_y - lim, padd_y + lim, -1,1);
+        let v = fromAngle(0.25*PI * paddleLerp);
+        
+        v.x = paddle.pos.x > 0.5 * this.world.width ? v.x *-1 : v.x;
+        
+        return v;
+        
+    }
+    
+        let result = this.solveBallPaddleCollision(newBall, paddles[this.host_id], dt);
+        newBall = result.newBall;
+  
+        if (result.haveCollided){
+            let newDir = getBounceDirection(paddles[this.host_id], newBall);
+            newBall = this.moveBall(newDir, newBall, dt);
+        }
+
+        result = this.solveBallPaddleCollision(newBall, paddles[this.client_id], dt);
+        newBall = result.newBall;
+  
+        if (result.haveCollided){
+            let newDir = getBounceDirection(paddles[this.client_id], newBall);
+            newBall = this.moveBall(newDir, newBall, dt);
+        }
+  
+    return newBall;
+  }
+
+
+
+
+Simulator.prototype.solveBallPaddleCollision = function(ball, paddle, dt) {
+
+
+    const mult = (v, n) => {
+        if (!(typeof n === 'number' && isFinite(n))) {
+          console.warn(
+            'p5.Vector.prototype.mult:',
+            'n is undefined or not a finite number'
+          );
+          return v;
+        }
+        v.x *= n;
+        v.y *= n;
+        v.z *= n;
+        return v;
+      };
+    
+      const mag = (vecT) => {
+        const x = vecT.x,
+          y = vecT.y,
+          z = vecT.z || 0;
+        const magSq = x * x + y * y + z * z;
+        return Math.sqrt(magSq);
+      };
+    
+     const normalize_vector = (v) => {
+        const len = mag(v);
+        // here we multiply by the reciprocal instead of calling 'div()'
+        // since div duplicates this zero check.
+        if (len !== 0) v = mult(v , 1 / len);
+        return v;
+      };
+
+
+    let haveCollided = false;
+    let newBall = ball;
+    let newPaddle = paddle;
+    let origDir_x = newBall.direction.x;
+    let origDir_y = newBall.direction.y;
+    let count = 0;
+    
+     
+
+    while( this.overlap(newPaddle, newBall ) ) {
+      let dir = { x:origDir_x * -1, y:origDir_y *-1};
+      dir = normalize_vector(dir);
+      let newPos = newBall.pos;
+      newPos.x = newPos.x + ((newBall.velocity + 100) * dir.x * dt);
+      newPos.y = newPos.y + ((newBall.velocity + 100) * dir.y * dt);
+      
+      newBall.pos = newPos;
+      
+      haveCollided = true;
+    }
+    
+    return {newBall, haveCollided};
+  }
+  
+  
 
 Simulator.prototype.create_timer = function(){
     setInterval(function(){
