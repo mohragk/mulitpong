@@ -188,7 +188,7 @@ function correctPosition(server_state) {
         adjusted_paddle.pos.y += new_pos_delta;
     }
     
-    simulator.paddles[player_id] =  cloneObject( adjusted_paddle );
+    //simulator.paddles[player_id] =  cloneObject( adjusted_paddle );
 }
 
 const solvePosition = (pos, vel, acc, dt /*seconds*/) => {
@@ -208,7 +208,6 @@ function interpolateOtherEntities(server_state) {
     simulator.paddles[other_id].pos.y = server_pos_y;
 
     simulator.ball.pos = cloneObject(server_state.ball.pos);
-    
 }
 
 
@@ -361,7 +360,7 @@ const drawPaddle = (paddle) => {
     rect(paddle.pos.x, paddle.pos.y, paddle.w, paddle.h);
 
     //debug
-    text(paddle.pos.y, paddle.pos.x, 20);
+    text(paddle.id, paddle.pos.x, 20);
 }
 
 

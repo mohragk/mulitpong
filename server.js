@@ -136,7 +136,7 @@ function createGameForWaiting() {
         players[0].join('game_room'+sim.id);
         players[1].join('game_room'+sim.id);
 
-        io.to('game_room'+sim.id).emit('joinedgame', {game_id: sim.id, client_id:players[0].id, host_id:players[1].id});
+        io.to('game_room'+sim.id).emit('joinedgame', {game_id: sim.id, host_id:players[0].id, client_id:players[1].id});
 
         sim.start(players[0].id, players[1].id);
 
