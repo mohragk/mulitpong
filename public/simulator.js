@@ -118,7 +118,7 @@ Simulator.prototype.start = function(host_id, client_id) {
     this.ghosts[client_id] = this.getPaddle(client_id, {x:this.world.width - (this.world.width/8), y:this.world.height/2});
     if (typeof global !== 'undefined') {
         
-        this._serverIntervalId = setInterval(this.send_state.bind(this), 45); 
+        this._serverIntervalId = setInterval(this.send_state.bind(this), 16); 
         this.is_server = true;
     }
     else {
@@ -191,18 +191,6 @@ Simulator.prototype.handleInput = function(input_buffer) {
 }
 
 Simulator.prototype.send_state = function(dt) { 
-    /*
-    this.laststate = {
-        hp  : this.players.self.pos,                //'host position', the game creators position
-        cp  : this.players.other.pos,               //'client position', the person that joined, their position
-        his : this.players.self.last_input_seq,     //'host input sequence', the last input we processed for the host
-        cis : this.players.other.last_input_seq,    //'client input sequence', the last input we processed for the client
-        t   : this.server_time                      // our current local time on the server
-    };
-    */
-
-    
-    
     
     if(typeof this.io !== 'undefined') {
 
@@ -211,7 +199,7 @@ Simulator.prototype.send_state = function(dt) {
             paddles: {},
         };  // <- initialize an object, not an array
 
-        server_state.paddles[this.host_id] = this.paddles[this.host_id];
+        server_state.paddles[this.host_id]   = this.paddles[this.host_id];
         server_state.paddles[this.client_id] = this.paddles[this.client_id];
         
         server_state.time = new Date().getTime().fixed(4);

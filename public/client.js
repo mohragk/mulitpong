@@ -18,6 +18,8 @@ var my_server_pos_y = 0;
 
 let latency = 0;
 let history = [];
+let server_state_buffer = [];
+let net_delay = 10; //millis
 
 let animator;
 
@@ -117,11 +119,15 @@ const initSimulator = (data) => {
 
 const handleServerUpdate = (server_state) => {
 
-    // Predict player position and correct with server data
-    correctPosition(server_state);
 
-    // Interpolate other entities position.
-    interpolateOtherEntities(server_state);
+    server_state_buffer.push(server_state);
+
+     // Predict player position and correct with server data
+     correctPosition(server_state);
+
+     // Interpolate other entities position.
+     interpolateOtherEntities(server_state);
+    
 }  
     
 
@@ -322,9 +328,34 @@ function keyReleased() {
     }
 }
 
+function update(dt) {
+
+    if (server_state_buffer.length) {
+        //shrink buffer to net delay size
+        let first_t = server_state_buffer[0].time;
+        let last_t = server_state_buffer[server_state_buffer.length-1].time;
+        let buffer_total_time = last_t - first_t;
+        let buffer_dt = buffer_total_time / server_state_buffer.length;
+        net_delay = buffer_dt;
+
+        server_state_buffer.slice(server_state_buffer.length-2,server_state_buffer.length-1 );
+
+        console.log(server_state_buffer);
+    }
+    
+    /*
+    // Predict player position and correct with server data
+    correctPosition(server_state);
+
+    // Interpolate other entities position.
+    interpolateOtherEntities(server_state);
+    */
+}
+
 function draw() {
     background(10);
     if (state === 'running') {
+
         const drawPaddle = (paddle) => {
             fill(255);
             rectMode(CENTER);
@@ -332,9 +363,6 @@ function draw() {
 
             //debug
             text(paddle.pos.y, paddle.pos.x, 20);
-
-
-            
         }
         drawPaddle(simulator.paddles[host_id] );
         drawPaddle(simulator.paddles[client_id] );
