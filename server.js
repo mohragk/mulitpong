@@ -30,7 +30,7 @@ let allClients = {};
 
 
 
-let fake_latency = 46;
+let fake_latency = 32;
 
 logger.log('Server started at port: ', port);
 
@@ -76,11 +76,21 @@ io.sockets.on('connection', (socket) => {
         }
       });
 
+
+      socket.on('pingserver', (data) => {
+        var sim = users[socket.id].simulator; 
+
+        logger.log('pinging the server');
+        if (sim !== null) {
+            sim.pingingServer(data);
+        }
+      })
+
     socket.on('keypressed', (data) => {
         var sim = users[socket.id].simulator;
 
         if (sim !== null ) {
-            if(fake_latency) {
+            if(fake_latency > 0) {
                 setTimeout(function(){
                     sim.handleKeyPress(data);
                 }.bind(this), fake_latency);
@@ -94,7 +104,7 @@ io.sockets.on('connection', (socket) => {
     socket.on('keyreleased', (data) => {
         var sim = users[socket.id].simulator;
         if (sim !== null ) {
-            if(fake_latency) {
+            if(fake_latency > 0) {
                 setTimeout(function(){
                     sim.handleKeyReleased(data);
                 }.bind(this), fake_latency);

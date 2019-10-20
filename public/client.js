@@ -1,16 +1,34 @@
+
+
 const TAU = 6.28318530718;
 let socket;
 let displayText = '';
+
 let simulator;
-let player_id;
 let state = 'idle';
+
+let player_id;
 let host_id;
 let client_id;
+
 let server_updates = [];
+//let input_seq = 0; 
+var my_server_pos = 0;
+
+let latency = 0;
+let history = [];
+
+
+
+
 let div;
 let animatePlayer;
 const f_lerp = (y1, y2, mu) => {
     return(y1*(1.0-mu)+y2*mu);
+ }
+
+ function cloneObject(obj) {
+    return JSON.parse(JSON.stringify(obj))
  }
 
  function Interval(fn, time) {
@@ -31,19 +49,28 @@ const f_lerp = (y1, y2, mu) => {
 
 function setup() {
     createCanvas(800,600);
-  socket = io.connect('');
-  socket.on('disconnect', endGame);
-  socket.on('waiting', showWaiting);
-  socket.on('joinedgame', initSimulator);
-  socket.on('endgame', endGame);
+    socket = io.connect('');
+    socket.on('disconnect', endGame);
+    socket.on('waiting', showWaiting);
+    socket.on('joinedgame', initSimulator);
+    socket.on('endgame', endGame);
 
-  socket.on('serverupdate', handleServerUpdate);
-  socket.on('notification', handleNotification);
+    socket.on('pingresponse', updateLatency);
 
-  //socket.on('notification', changeNotification);
-  server_updates = [];
+    socket.on('serverupdate', handleServerUpdate);
+    socket.on('notification', handleNotification);
 
-  div = createDiv('');
+    //socket.on('notification', changeNotification);
+    server_updates = [];
+    input_seq = 0;
+    div = createDiv('');
+}
+
+function updateLatency(data) {
+    let original_time = data.time;
+    latency = new Date().getTime() - original_time;
+    console.log('Measured latency = ',latency);
+    
 }
 
 const endGame = () => {
@@ -80,80 +107,96 @@ const initSimulator = (data) => {
     simulator.start(host_id, client_id);
 
     animatePlayer = new Animate(simulator.paddles[player_id], 0, 0, 1);
+
+    let t = new Date().getTime();
+    socket.emit('pingserver', {time:t})
     //animatePlayer.actor = simulator.paddles[player_id];
 }
 
 const handleServerUpdate = (server_state) => {
-    
-    
-    //Store the server time (this is offset by the latency in the network, by the time we get it)
-    //this.server_time = server_state.t;
-    
-    //Update our local offset time from the last server update
-    //this.client_time = this.server_time - (this.net_offset/1000);
-    
-    let state = server_state;
-    let time_offset = 100; //millis
-    let server_time = state.time - (time_offset/1000);
-    //Update our local offset time from the last server update
-    //this.client_time = this.server_time - (this.net_offset/1000);
-    
-    //if(server_state.id === player_id) return; //ignore self
-    {
-
-        //Cache the data from the server,
-        //and then play the timeline
-        //back to the player with a small delay (net_offset), allowing
-        //interpolation between the points.
-        server_updates.push(state);
-
-        //we limit the buffer in seconds worth of updates
-        //60fps*buffer seconds = number of samples
-        let buffer_size = 2;
-        if(server_updates.length >= ( 10 * buffer_size )) {
-            server_updates.splice(0,1);
-        }
-
-        //We can see when the last tick we know of happened.
-        //If client_time gets behind this due to latency, a snap occurs
-        //to the last tick. Unavoidable, and a reallly bad connection here.
-        //If that happens it might be best to drop the game after a period of time.
-        //oldest_tick = this.server_updates[0].time;
-
-        //Handle the latest positions from the server
-        //and make sure to correct our local predictions, making the server have final say.
-        processNetPredictionCorrection(server_updates);
-    }
-    
-}
-var my_server_pos = 0;
-const processNetPredictionCorrection = (state_buffer) => {
-
-    
-    // No updates to be found
-    if (state_buffer.length  == 0 ) return;
-
     //The most recent server update
-    let latest_server_data = state_buffer[state_buffer.length-1];
+    let latest_server_data = server_state;
+   
 
-        //Our latest server position
-    my_server_pos = latest_server_data.paddles[player_id].y;
-
-        //Update the debug server position block
-    simulator.ghosts[player_id].pos.y = my_server_pos;
-
-    /*
-    simulator.paddles = simulator.paddles.map((paddle) => {
-        //let the_id = paddle.id;
-        paddle.pos.y = latest_server_data.paddles[paddle.id].y;
-        return paddle;
-    });
-    */
+    // @Todo: immediate correct other players?
     let other_id = player_id == host_id ? client_id : host_id;
     simulator.paddles[other_id].pos.y = latest_server_data.paddles[other_id].y;
+
+
+    correctPosition(latest_server_data);
+}  
     
-    smoothlyCorrectPosition(my_server_pos);
-}   
+
+
+    
+
+
+function correctPosition(server_state) {
+
+
+    // get the total time that is saved in the history,
+    let history_time = (history.length) ? history.reduce((a, b) => ({dt: a.dt + b.dt})).dt : 0;
+    history_time *= 1000;
+    // get index to split history up to
+    let index_to_delete_upto = Math.floor(history_time - latency) ;
+    
+    // delete entries that are too old
+    if (index_to_delete_upto) {
+        history = history.slice(index_to_delete_upto, history.lenght -1);
+    }
+
+    
+    //Our latest server position
+    my_server_pos = server_state.paddles[player_id].y;
+
+     //Update the debug server position block
+     simulator.ghosts[player_id].pos.y = my_server_pos;
+
+    // call the simulator solvePaddle function, with our actual, 
+    // historical position and apply history
+    let adjusted_paddle = cloneObject(simulator.paddles[player_id] );
+    adjusted_paddle.pos.y = my_server_pos;
+   
+    const solveDeltaPosition = (paddle, acc, vel, dir, dt) => {
+       
+        let acc_y = acc * dir;
+        acc_y -= vel * 10;
+        paddle.velocity.y =   vel + acc_y * dt;
+
+        let old_pos = paddle.pos.y;
+        let new_pos = solvePosition(old_pos, paddle.velocity.y, acc_y, dt);
+    
+        let half = paddle.h /2;
+        new_pos = (new_pos < half) ? half : new_pos; //check oob
+        new_pos = (new_pos > height - half) ? height-half : new_pos; //check oob
+
+        
+        return  old_pos - new_pos;
+    }
+
+    // accumulate delta Pos based on history
+    let new_pos_delta = 0;
+    for (let i = 0; i < history.length; i++) {
+    
+        new_pos_delta += solveDeltaPosition(adjusted_paddle, history[i].acc, history[i].vel, adjusted_paddle.direction, history[i].dt);
+        
+        //displayText = new_pos_delta;
+    }
+    if(new_pos_delta < 1.1) {
+        adjusted_paddle.pos.y += new_pos_delta;
+    }
+    
+    simulator.paddles[player_id] =  cloneObject( adjusted_paddle );
+}
+
+const solvePosition = (pos, vel, acc, dt /*seconds*/) => {
+    return pos + vel * dt + ((acc * (dt*dt)) / 2);
+}
+
+Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
+
+
+
 
 function smoothlyCorrectPosition(server_pos) {
     let client_pos = simulator.paddles[player_id].pos.y;
@@ -267,10 +310,16 @@ class Animate {
 
 function keyPressed() {
     if(state === 'running') {
-        socket.emit('keypressed', {id: player_id, keyCode: keyCode});
+        let input = {
+            id: player_id,
+            keyCode: keyCode,
+            time: new Date().getTime(),
+            seq: input_seq++
+        }
+        socket.emit('keypressed', input);
 
-    //if(simulator)
-        simulator.handleKeyPress({id: player_id, keyCode: keyCode});
+    
+        simulator.handleKeyPress(input);
     }
     
 }
@@ -278,13 +327,20 @@ function keyPressed() {
 
 function keyReleased() {
     if (state === 'running') {
-        socket.emit('keyreleased', {id: player_id, keyCode: keyCode});
 
-    //if(simulator)
-        simulator.handleKeyReleased({id: player_id, keyCode: keyCode});    
+        let input = {
+            id: player_id,
+            keyCode: keyCode,
+            time: new Date().getTime(),
+            seq: input_seq++
+        }
+        socket.emit('keyreleased', input);
+
+    
+        simulator.handleKeyReleased(input);
+        
     }
 }
-
 
 function draw() {
     background(10);
@@ -296,9 +352,26 @@ function draw() {
 
             //debug
             text(paddle.pos.y, paddle.pos.x, 20);
+
+
+            
         }
         drawPaddle(simulator.paddles[host_id] );
         drawPaddle(simulator.paddles[client_id] );
+
+        //also, save a history
+        let player_paddle = simulator.paddles[player_id];
+        let delt = deltaTime /1000;
+        history.push(
+            {
+                vel: player_paddle.velocity.y, //only interested in y
+                acc: player_paddle.acceleration,
+                dir: player_paddle.direction,
+                dt: delt.fixed(4) //millis!
+            }
+        )
+        
+        
 
         let ghost = simulator.ghosts[player_id];
         noFill();
