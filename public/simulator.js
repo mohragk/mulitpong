@@ -212,30 +212,18 @@ Simulator.prototype.handleKeyReleased = function(input) {
 
     if(input.id === this.client_id) {
         let flag = 0;
-        switch(input.keyCode) {
-            case 38:
-                flag = KEY_UP;
-                break;
-            case 40:
-                flag = KEY_DOWN; 
-                break;
-        }
+        if(input.keyCode === 38) flag |= KEY_UP;
+        if(input.keyCode === 40) flag |= KEY_DOWN; 
         
         if(flag)this.key_state_client &=  ~flag;
     }
 
     if(input.id === this.host_id) {
         let flag = 0;
-        switch(input.keyCode) {
-            case 38:
-                flag = KEY_UP;
-                break;
-            case 40:
-                flag = KEY_DOWN; 
-                break;
-        }
+        if(input.keyCode === 38) flag |= KEY_UP;
+        if(input.keyCode === 40) flag |= KEY_DOWN; 
         
-        if(flag) this.key_state_host &=  ~flag;
+        if(flag) this.key_state_host &= ~flag;
     }
 
 };
