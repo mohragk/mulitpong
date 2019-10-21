@@ -160,9 +160,6 @@ Simulator.prototype.start = function( host_id ,client_id) {
         this._serverIntervalId = setInterval(this.send_state.bind(this), 18); 
         this.is_server = true;
     }
-    else {
-        //window.requestAnimationFrame( this.mainLoop.bind(this), this.viewport );
-    }
 
     // call to mainLoop to start looping
     this.mainLoop();

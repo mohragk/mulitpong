@@ -1,28 +1,8 @@
 
-const TAU = 6.28318530718;
-let socket;
-let displayText = '';
-
-let simulator;
-let state = 'idle';
-
-let player_id;
-let other_id;
-let host_id;
-let client_id;
-
-var my_server_pos_y = 0;
-
-let latency = 0;
-let history = [];
-let last_server_state = {};
-//let net_delay = 10; //millis
-
-
-let div;
 const f_lerp = (y1, y2, mu) => {
     return(y1*(1.0-mu)+y2*mu);
  }
+
 
  function cloneObject(obj) {
     return JSON.parse(JSON.stringify(obj))
@@ -44,6 +24,32 @@ const f_lerp = (y1, y2, mu) => {
     };
 }
 
+Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
+
+
+
+const TAU = 6.28318530718;
+let socket;
+let displayText = '';
+
+let simulator;
+let state = 'idle';
+
+let player_id;
+let other_id;
+let host_id;
+let client_id;
+
+var my_server_pos_y = 0;
+
+let latency = 0;
+let history = [];
+let last_server_state = {};
+
+let div;
+
+
+
 function setup() {
     createCanvas(800,600);
     socket = io.connect('');
@@ -61,6 +67,10 @@ function setup() {
     input_seq = 0;
     div = createDiv('');
 }
+
+
+// ****************  
+// SOCKET CALLBACKS
 
 function updateLatency(data) {
     let original_time = data.time;
@@ -110,20 +120,62 @@ const initSimulator = (data) => {
     socket.emit('pingserver', {time:t})
 }
 
+
 const handleServerUpdate = (server_state) => {
-
-
     last_server_state = server_state;
-
-    /*
-     // Predict player position and correct with server data
-     correctPosition(server_state);
-
-     // Interpolate other entities position.
-     interpolateOtherEntities(server_state);
-    */
 }  
     
+// END
+// ************
+
+
+
+
+// ************
+// LOOPING FUNCTIONS
+
+function update(dt) {
+    //also, save a history
+    let player_paddle = simulator.paddles[player_id];
+    history.push(
+        {
+            vel: player_paddle.velocity.y, //only interested in y
+            acc: player_paddle.acceleration,
+            dir: player_paddle.direction,
+            dt: dt.fixed(4) //millis!
+        }
+    )
+    
+    if(last_server_state.time) {
+        // Predict player position and correct with server data
+        correctPosition(last_server_state);
+
+        // Interpolate other entities position.
+        interpolateOtherEntities(last_server_state);
+    }
+}
+
+
+let lastframetime = 0;
+
+mainLoop = function() {
+    console.log('mainLooping');
+
+
+    let t = new Date().getTime();
+    //Work out the delta time
+    let dt = lastframetime ? ( (t - lastframetime)/1000.0).fixed(5) : 0.01666;
+
+    //Store the last frame time
+    lastframetime = t;
+
+    if(state === 'running') {
+        update(dt);       
+        setTimeout(mainLoop, (t+dt) - new Date().getTime())
+    }
+
+};
+
 
 
 function correctPosition(server_state) {
@@ -189,9 +241,6 @@ const solvePosition = (pos, vel, acc, dt /*seconds*/) => {
     return pos + vel * dt + ((acc * (dt*dt)) / 2);
 }
 
-Number.prototype.fixed = function(n) { n = n || 3; return parseFloat(this.toFixed(n)); };
-
-
 
 
 function interpolateOtherEntities(server_state) {
@@ -204,6 +253,8 @@ function interpolateOtherEntities(server_state) {
     simulator.ball.pos = cloneObject(server_state.ball.pos);
 }
 
+// END
+// **********
 
 
 
@@ -222,11 +273,6 @@ function keyPressed() {
         simulator.handleKeyPress(input);
     }
     
-    return (keyCode !== 38 && keyCode !== 40) ; //prevent default behaviour
-}
-    
-
-function keyTyped() {
     return (keyCode !== 38 && keyCode !== 40) ; //prevent default behaviour
 }
 
@@ -248,51 +294,16 @@ function keyReleased() {
 
     return (keyCode !== 38 && keyCode !== 40) ;
 }
+    
 
-function update(dt) {
-    //also, save a history
-    let player_paddle = simulator.paddles[player_id];
-    history.push(
-        {
-            vel: player_paddle.velocity.y, //only interested in y
-            acc: player_paddle.acceleration,
-            dir: player_paddle.direction,
-            dt: dt.fixed(4) //millis!
-        }
-    )
-    
-    if(last_server_state.time) {
-        // Predict player position and correct with server data
-        correctPosition(last_server_state);
-
-        // Interpolate other entities position.
-        interpolateOtherEntities(last_server_state);
-    }
-    
-    
+function keyTyped() {
+    return (keyCode !== 38 && keyCode !== 40) ; //prevent default behaviour
 }
 
-let lastframetime = 0;
-
-mainLoop = function() {
-    console.log('mainLooping');
 
 
-    let t = new Date().getTime();
-    //Work out the delta time
-    let dt = lastframetime ? ( (t - lastframetime)/1000.0).fixed(5) : 0.01666;
-
-    //Store the last frame time
-    lastframetime = t;
-
-    if(state === 'running') {
-        update(dt);       
-        setTimeout(mainLoop, (t+dt) - new Date().getTime())
-    }
-
-};
-
-
+// ***********
+// DRAWING
 
 const drawPaddle = (paddle) => {
     let col = paddle.id === player_id ? 'rgba(140, 255, 179, 1.0)' :'rgba(220, 220, 220, 1.0)' 
@@ -309,6 +320,9 @@ const drawBall = (ball) => {
     rect(ball.pos.x, ball.pos.y, ball.radius, ball.radius);
 
 }
+
+// END
+// **********
 
 function draw() {
     background(10);
