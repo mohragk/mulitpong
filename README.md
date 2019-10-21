@@ -27,4 +27,4 @@ It works as follows.
 
  
 ## Disclaimer
-This project was made as a personal challenge to investigate multiplayer gaming.
+This project was made as a personal challenge to investigate multiplayer gaming. This is *not* production quality code and should be used as such.
