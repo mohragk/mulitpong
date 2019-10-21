@@ -157,7 +157,7 @@ Simulator.prototype.start = function( host_id ,client_id) {
 
     if (typeof global !== 'undefined') {
         
-        this._serverIntervalId = setInterval(this.send_state.bind(this), 16); 
+        this._serverIntervalId = setInterval(this.send_state.bind(this), 18); 
         this.is_server = true;
     }
     else {
