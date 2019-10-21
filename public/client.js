@@ -97,8 +97,7 @@ const showWaiting = (socket_id) => {
 
 const handleNotification = (data) => {
     displayText = data.message;
-    //console.log('connected and waiting');
-    //player_id = socket_id;
+
 }
 
 
@@ -159,8 +158,6 @@ function update(dt) {
 let lastframetime = 0;
 
 mainLoop = function() {
-    console.log('mainLooping');
-
 
     let t = new Date().getTime();
     //Work out the delta time
@@ -328,16 +325,10 @@ function draw() {
     background(10);
     if (state === 'running') {
 
-
-
         drawPaddle(simulator.paddles[host_id] );
         drawPaddle(simulator.paddles[client_id] );
 
         drawBall(simulator.ball);
-
-      
-        
-        
 
         let ghost = simulator.ghosts[player_id];
         noFill();
