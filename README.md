@@ -1,6 +1,5 @@
-# Multipong
- A simple multiplayer version of Pong, with a twist.
- The game uses client-side prediction of the player position to deliver a smoother experience. 
+# Multipong: a realtime NodeJS multiplayer version of Pong
+...with a twist.
  
 ## Live demo
 [Run the game on heroku](https://hot-multi-pong.herokuapp.com), use a second window if there are no other players at the moment.
