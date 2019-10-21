@@ -49,7 +49,7 @@ var Simulator = function(id, player_id, client_id, io) {
     this.last_input_seq_host;
     this.last_input_seq_client;
 
-    this.fake_latency = 32;
+    this.fake_latency = 0;
 
   
     

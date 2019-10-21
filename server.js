@@ -30,7 +30,7 @@ let allClients = {};
 
 
 
-let fake_latency = 32;
+let fake_latency = 0;
 
 logger.log('Server started at port: ', port);
 
