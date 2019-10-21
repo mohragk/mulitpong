@@ -188,7 +188,7 @@ function correctPosition(server_state) {
         adjusted_paddle.pos.y += new_pos_delta;
     }
     
-    //simulator.paddles[player_id] =  cloneObject( adjusted_paddle );
+    simulator.paddles[player_id] =  cloneObject( adjusted_paddle );
 }
 
 const solvePosition = (pos, vel, acc, dt /*seconds*/) => {
