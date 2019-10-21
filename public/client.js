@@ -1,5 +1,4 @@
 
-
 const TAU = 6.28318530718;
 let socket;
 let displayText = '';
@@ -12,16 +11,12 @@ let other_id;
 let host_id;
 let client_id;
 
-let server_updates = [];
-//let input_seq = 0; 
 var my_server_pos_y = 0;
 
 let latency = 0;
 let history = [];
-let server_state_buffer = [];
-let net_delay = 10; //millis
-
-let animator;
+let last_server_state = {};
+//let net_delay = 10; //millis
 
 
 let div;
@@ -63,7 +58,6 @@ function setup() {
     socket.on('notification', handleNotification);
 
     //socket.on('notification', changeNotification);
-    server_updates = [];
     input_seq = 0;
     div = createDiv('');
 }
@@ -109,25 +103,25 @@ const initSimulator = (data) => {
 
     other_id = (host_id === player_id) ? client_id : host_id;
     simulator.start(host_id, client_id);
+    mainLoop(); //initiate mainLoop
 
-    animator = new Animate(simulator.paddles[other_id], 0, 0, 1);
 
     let t = new Date().getTime();
     socket.emit('pingserver', {time:t})
-    //animatePlayer.actor = simulator.paddles[player_id];
 }
 
 const handleServerUpdate = (server_state) => {
 
 
-    server_state_buffer.push(server_state);
+    last_server_state = server_state;
 
+    /*
      // Predict player position and correct with server data
      correctPosition(server_state);
 
      // Interpolate other entities position.
      interpolateOtherEntities(server_state);
-    
+    */
 }  
     
 
@@ -211,87 +205,6 @@ function interpolateOtherEntities(server_state) {
 }
 
 
-class Animate {
-    constructor(actor, startPos, endPos, duration) {
-      this.actor = actor;
-      this.startPos = startPos;
-      this.endPos = endPos;
-      this.duration = duration;
-      this.state = 'idle';
-      this.timer = 0;
-      this.interval = new Interval(this.update, 300);
-    }
-    
-    start() {
-      if(this.state == 'idle') {
-        this.state = 'animating';
-        this.actor.pos.x = this.startPos.x;
-        this.actor.pos.y = this.startPos.y;
-        this.timer = 0;
-
-        if (this.interval.isRunning() != false) this.interval.start();
-      }
-    }
-    
-    resetPoints(start, end) {
-      if(this.state == 'idle') {
-        this.startPos = start;
-        this.endPos = end;
-      }
-    }
-    
-    cancel() {
-      this.state = 'idle';
-      this.timer = 0;
-      this.actor.pos.x = this.startPos.x;
-      this.actor.pos.y = this.startPos.y;
-    }
-
-    skip() {
-        this.timer = this.duration;
-      this.actor.pos.x = this.endPos.x;
-      this.actor.pos.y = this.endPos.y;
-      console.log('skipping')
-    }
-    
-    revert() {
-      let temp_x = this.startPos.x;
-      let temp_y = this.startPos.y;
-      this.startPos.x = this.endPos.x;
-      this.startPos.y = this.endPos.y;
-      this.endPos.x = temp_x;
-      this.endPos.y = temp_y;
-      
-      this.timer = this.duration - this.timer;
-      
-      
-    }
-    
-    update(dt) {
-        if ( this.timer > this.duration ) {
-            this.state = 'idle';
-            this.interval.stop();
-        }
-      if (this.state === 'animating') {
-        let dt = (60/1000) / 4;
-        let mu = this.timer / this.duration;
-        let new_x = f_lerp(this.startPos.x, this.endPos.x, mu);
-        let new_y = f_lerp(this.startPos.y, this.endPos.y, mu);;
-          
-        this.actor.pos.x = new_x;
-        this.actor.pos.y = new_y;
-        
-        this.timer += dt;
-        
-      }
-      
-      
-       
-      
-     
-    }
-    
-  }
 
 
 
@@ -337,28 +250,48 @@ function keyReleased() {
 }
 
 function update(dt) {
+    //also, save a history
+    let player_paddle = simulator.paddles[player_id];
+    history.push(
+        {
+            vel: player_paddle.velocity.y, //only interested in y
+            acc: player_paddle.acceleration,
+            dir: player_paddle.direction,
+            dt: dt.fixed(4) //millis!
+        }
+    )
+    
+    if(last_server_state.time) {
+        // Predict player position and correct with server data
+        correctPosition(last_server_state);
 
-    if (server_state_buffer.length) {
-        //shrink buffer to net delay size
-        let first_t = server_state_buffer[0].time;
-        let last_t = server_state_buffer[server_state_buffer.length-1].time;
-        let buffer_total_time = last_t - first_t;
-        let buffer_dt = buffer_total_time / server_state_buffer.length;
-        net_delay = buffer_dt;
-
-        server_state_buffer.slice(server_state_buffer.length-2,server_state_buffer.length-1 );
-
-        console.log(server_state_buffer);
+        // Interpolate other entities position.
+        interpolateOtherEntities(last_server_state);
     }
     
     
-    // Predict player position and correct with server data
-    correctPosition(server_state);
-
-    // Interpolate other entities position.
-    interpolateOtherEntities(server_state);
-    
 }
+
+let lastframetime = 0;
+
+mainLoop = function() {
+    console.log('mainLooping');
+
+
+    let t = new Date().getTime();
+    //Work out the delta time
+    let dt = lastframetime ? ( (t - lastframetime)/1000.0).fixed(5) : 0.01666;
+
+    //Store the last frame time
+    lastframetime = t;
+
+    if(state === 'running') {
+        update(dt);       
+        setTimeout(mainLoop, (t+dt) - new Date().getTime())
+    }
+
+};
+
 
 
 const drawPaddle = (paddle) => {
@@ -388,17 +321,7 @@ function draw() {
 
         drawBall(simulator.ball);
 
-        //also, save a history
-        let player_paddle = simulator.paddles[player_id];
-        let delt = deltaTime /1000;
-        history.push(
-            {
-                vel: player_paddle.velocity.y, //only interested in y
-                acc: player_paddle.acceleration,
-                dir: player_paddle.direction,
-                dt: delt.fixed(4) //millis!
-            }
-        )
+      
         
         
 
@@ -408,6 +331,6 @@ function draw() {
         rect(ghost.pos.x, ghost.pos.y, ghost.w, ghost.h);
         noStroke();
     }
-    if(animator) animator.update(60/1000)
+  
     div.html('<p>'+displayText+'</p>');
 }
