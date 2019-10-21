@@ -3,7 +3,14 @@ const remap = function(n, start1, stop1, start2, stop2) {
   };
 
 
-  const PI = 3.14159265359
+const PI = 3.14159265359
+
+const KEY_UP   = 1;
+const KEY_DOWN = 1 << 1;
+
+function dec2bin(dec){
+    return (dec >>> 0).toString(2);
+}
 
 var Simulator = function(id, player_id, client_id, io) {
     
@@ -35,11 +42,16 @@ var Simulator = function(id, player_id, client_id, io) {
 
     //create associative input buffer
     this.input_buffer = [];
+    this.key_state_client = 0;
+    this.key_state_host = 0;
+
+    //unused
     this.last_input_seq_host;
     this.last_input_seq_client;
 
     this.fake_latency = 32;
 
+  
     
 }
 
@@ -64,6 +76,9 @@ Simulator.prototype.mainLoop = function() {
 
 if(this.is_running) {
     this.handleInput(this.input_buffer);
+   
+    console.log('Bin up c: ', dec2bin(this.key_state_client));
+    console.log('Bin up h: ', dec2bin(this.key_state_host));
     
     this.update(this.dt);
     
@@ -175,7 +190,34 @@ Simulator.prototype.stop = function( ) {
 Simulator.prototype.handleKeyPress = function(input) {
     //if(this.paddles.length == 0) return;
     this.input_buffer.push( input );
- 
+    
+    if(input.id === this.client_id) {
+        let flag = 0;
+        switch(input.keyCode) {
+            case 38:
+                flag |= KEY_UP;
+                break;
+            case 40:
+                flag |= KEY_DOWN; 
+                break;
+        }
+        
+        if(flag) this.key_state_client =  flag;
+    }
+
+    if(input.id === this.host_id) {
+        let flag = 0;
+        switch(input.keyCode) {
+            case 38:
+                flag |= KEY_UP;
+                break;
+            case 40:
+                flag |= KEY_DOWN; 
+                break;
+        }
+        
+        if(flag) this.key_state_host =  flag;
+    }
 };
 
 Simulator.prototype.handleKeyReleased = function(input) {
@@ -184,39 +226,52 @@ Simulator.prototype.handleKeyReleased = function(input) {
         return the_input.d == input.id && the_input.keyCode == input.keyCode;
     })
 
+    if(input.id === this.client_id) {
+        let flag = 0;
+        switch(input.keyCode) {
+            case 38:
+                flag = KEY_UP;
+                break;
+            case 40:
+                flag = KEY_DOWN; 
+                break;
+        }
+        
+        if(flag)this.key_state_client &=  ~flag;
+    }
+
+    if(input.id === this.host_id) {
+        let flag = 0;
+        switch(input.keyCode) {
+            case 38:
+                flag = KEY_UP;
+                break;
+            case 40:
+                flag = KEY_DOWN; 
+                break;
+        }
+        
+        if(flag) this.key_state_host &=  ~flag;
+    }
+
 };
 
 Simulator.prototype.handleInput = function(input_buffer) {
     if(!this.paddles) return;
    
-    let new_host_direction = 0;
     let new_client_direction = 0;
+    if(this.key_state_client & KEY_UP) new_client_direction = -1;
+    if(this.key_state_client & KEY_DOWN) new_client_direction = 1;
 
-    if(input_buffer.length > 0) {
-        for (let i = 0; i < input_buffer.length; i++) {
-            let id = input_buffer[i].id;
-            let keycode = input_buffer[i].keyCode;
-            let new_direction = 0;
-            switch(keycode) {
-                case 38:
-                    new_direction = -1;
-                    break;
-                case 40:
-                    new_direction = 1;
-                    break
-            }
-            
-            if (id == this.host_id) new_host_direction = new_direction;
-            if (id == this.client_id) new_client_direction = new_direction; 
+    
+    let new_host_direction = 0;
+    if(this.key_state_host & KEY_UP) new_host_direction = -1;
+    if(this.key_state_host & KEY_DOWN) new_host_direction = 1;
 
-            
-        }
-    }
 
     this.paddles[this.host_id].direction = new_host_direction;
     this.paddles[this.client_id].direction = new_client_direction;
 
-    // pressed:
     
 }
 
