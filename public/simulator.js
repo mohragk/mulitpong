@@ -215,7 +215,7 @@ Simulator.prototype.handleKeyReleased = function(input) {
         if(input.keyCode === 38) flag |= KEY_UP;
         if(input.keyCode === 40) flag |= KEY_DOWN; 
         
-        if(flag)this.key_state_client &=  ~flag;
+        if(flag)this.key_state_client &= ~flag;
     }
 
     if(input.id === this.host_id) {
@@ -234,13 +234,13 @@ Simulator.prototype.handleInput = function(input_buffer) {
     let new_client_direction = 0;
     if(this.key_state_client & KEY_UP) new_client_direction   += -1;
     if(this.key_state_client & KEY_DOWN) new_client_direction += 1;
-
+    if( (this.key_state_client & (KEY_UP | KEY_DOWN)) == (KEY_UP | KEY_DOWN)) new_client_direction = 0;
 
     
     let new_host_direction = 0;
     if(this.key_state_host & KEY_UP) new_host_direction   += -1;
     if(this.key_state_host & KEY_DOWN) new_host_direction += 1;
-
+    if( (this.key_state_host & (KEY_UP | KEY_DOWN)) == (KEY_UP | KEY_DOWN)) new_host_direction = 0;
 
     this.paddles[this.host_id].direction = new_host_direction;
     this.paddles[this.client_id].direction = new_client_direction;
