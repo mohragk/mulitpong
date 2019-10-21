@@ -152,7 +152,7 @@ function update(dt) {
         // Interpolate other entities position.
         interpolateOtherEntities(last_server_state);
 
-        last_server_state = null;
+       
     }
 }
 
