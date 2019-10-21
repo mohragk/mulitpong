@@ -276,7 +276,7 @@ Simulator.prototype.solvePaddle = function(paddle, dt) {
 Simulator.prototype.update = function(dt) {
 
     // do it, do it, do it four times
-    let steps = 1;
+    let steps = 4;
     dt /= steps;
 
     while(steps > 0) {
@@ -285,8 +285,8 @@ Simulator.prototype.update = function(dt) {
 
         if (this.is_server) {
             let ballDT = this.getDeltaTimeForBall(this.paddles);
-            this.ball = this.moveBall(this.ball.direction, this.ball, dt);
-            this.ball = this.checkBallWalls(this.ball, this.world, dt);
+            this.ball = this.moveBall(this.ball.direction, this.ball, ballDT);
+            this.ball = this.checkBallWalls(this.ball, this.world, ballDT);
             this.ball = this.checkBallPaddlesCollision(this.paddles, this.ball, dt);
         }
         
@@ -301,14 +301,16 @@ Simulator.prototype.getDeltaTimeForBall = function(paddles) {
         return Math.abs(paddle.pos.y - paddle.old_pos.y);
     }
   
+
+    let total = 0;
+    for(id in paddles) {
+        total += getDeltaPos(paddles[id])
+    }
  
-    let result = paddles.map((paddle) => {
-        return getDeltaPos(paddle);
-    });
     
    
-    
-    let total = result[0] + result[1];
+    console.log(total);
+ 
     
     return total / 800;
 }
@@ -541,7 +543,6 @@ Simulator.prototype.solveBallPaddleCollision = function(ball, paddle, dt) {
       
       haveCollided = true;
 
-    console.log(newBall.pos.x, ' . ', paddle.id, ' . ', paddle.pos.x)
     }
     
     return {newBall, haveCollided};

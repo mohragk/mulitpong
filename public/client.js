@@ -344,13 +344,13 @@ function update(dt) {
         console.log(server_state_buffer);
     }
     
-    /*
+    
     // Predict player position and correct with server data
     correctPosition(server_state);
 
     // Interpolate other entities position.
     interpolateOtherEntities(server_state);
-    */
+    
 }
 
 
