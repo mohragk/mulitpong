@@ -76,10 +76,7 @@ Simulator.prototype.mainLoop = function() {
 
 if(this.is_running) {
     this.handleInput(this.input_buffer);
-   
-    console.log('Bin up c: ', dec2bin(this.key_state_client));
-    console.log('Bin up h: ', dec2bin(this.key_state_host));
-    
+
     this.update(this.dt);
     
     setTimeout(this.mainLoop.bind(this), (t+this.dt) - new Date().getTime())
@@ -172,7 +169,6 @@ Simulator.prototype.start = function( host_id ,client_id) {
     // call to mainLoop to start looping
     this.mainLoop();
 
-    this.input_buffer = [];
     let sim_type =  this.is_server ? 'Server' : 'Client';
     console.log(sim_type, ' simulation: ',this.id, ' started.');
 };
@@ -193,30 +189,18 @@ Simulator.prototype.handleKeyPress = function(input) {
     
     if(input.id === this.client_id) {
         let flag = 0;
-        switch(input.keyCode) {
-            case 38:
-                flag |= KEY_UP;
-                break;
-            case 40:
-                flag |= KEY_DOWN; 
-                break;
-        }
-        
+        if (input.keyCode === 38) flag |= KEY_UP;
+        if (input.keyCode === 40) flag |= KEY_DOWN; 
+    
         if(flag) this.key_state_client =  flag;
     }
 
     if(input.id === this.host_id) {
         let flag = 0;
-        switch(input.keyCode) {
-            case 38:
-                flag |= KEY_UP;
-                break;
-            case 40:
-                flag |= KEY_DOWN; 
-                break;
-        }
+        if (input.keyCode === 38) flag |= KEY_UP;
+        if (input.keyCode === 40) flag |= KEY_DOWN; 
         
-        if(flag) this.key_state_host =  flag;
+        if(flag) this.key_state_host = flag;
     }
 };
 
