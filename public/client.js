@@ -151,7 +151,7 @@ function correctPosition(server_state) {
     //Our latest server position
     my_server_pos_y = server_state.paddles[player_id].pos.y;
 
-    //Update the debug server position block
+    //Update the debug server position ghost
     simulator.ghosts[player_id].pos.y = my_server_pos_y;
 
     // call the simulator solvePaddle function, with our actual, 
