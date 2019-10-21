@@ -6,7 +6,7 @@
 [Run the game on heroku](https://hot-multi-pong.herokuapp.com), use a second window if there are no other players at the moment.
 
 ## Install
-Simply clone this repo and execute `npm start` or `node server.js` via terminal. Open a browser windown and go to localhost:3000. Open a second screen to initiate a game.
+Simply clone this repo and execute `npm start` or `node server.js` via terminal. Open a browser window and go to http://localhost:3000. Open a second screen to initiate a game.
 
 ## Architecture of the game
 The game consists of 3 main elements: a server, a simulator and a client.
