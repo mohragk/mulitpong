@@ -115,8 +115,14 @@ io.sockets.on('connection', (socket) => {
         }
     })
 
-  
-   
+    //debug all runing instances of simular
+    let total = 0;
+    for (id in users) {
+        if(users[id].simulator instanceof Simulator) {
+            total++;
+        }
+    }
+    logger.log('instances of sim running: ', total );    
     createGameForWaiting();
 });
 
@@ -174,8 +180,8 @@ function leaveGame(socket) {
       socket.leave(room);
       
       users[socket.id].simulator.stop();
-
       delete users[socket.id].simulator;
+
       users[socket.id].player = null;
       users[socket.id].simulator = null;
   
