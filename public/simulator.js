@@ -308,10 +308,6 @@ Simulator.prototype.getDeltaTimeForBall = function(paddles) {
     }
  
     
-   
-    console.log(total);
- 
-    
     return total / 800;
 }
 
