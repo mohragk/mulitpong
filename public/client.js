@@ -337,6 +337,8 @@ function draw() {
         stroke(180);
         rect(ghost.pos.x, ghost.pos.y, ghost.w, ghost.h);
         noStroke();
+
+        
     }
   
     div.html('<p>'+displayText+'</p>');
