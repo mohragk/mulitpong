@@ -313,6 +313,10 @@ function keyPressed() {
 }
     
 
+function keyTyped() {
+    return (keyCode !== 38 && keyCode !== 40) ; //prevent default behaviour
+}
+
 function keyReleased() {
     if (state === 'running') {
 
