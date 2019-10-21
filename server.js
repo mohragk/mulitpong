@@ -173,7 +173,9 @@ function leaveGame(socket) {
       // leave the current room
       socket.leave(room);
       
+      users[socket.id].simulator.stop();
 
+      delete users[socket.id].simulator;
       users[socket.id].player = null;
       users[socket.id].simulator = null;
   

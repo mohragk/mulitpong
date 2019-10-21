@@ -29,6 +29,8 @@ var Simulator = function(id, player_id, client_id, io) {
     this._dte = new Date().getTime();   //The local timer last frame time
     this.dt = 0.016;
 
+    this.is_running = false;
+
     this.create_timer();
 
     //create associative input buffer
@@ -58,12 +60,16 @@ Simulator.prototype.mainLoop = function() {
     //Store the last frame time
     this.lastframetime = t;
 
+   
+
+if(this.is_running) {
     this.handleInput(this.input_buffer);
     
     this.update(this.dt);
-
-
+    
     setTimeout(this.mainLoop.bind(this), (t+this.dt) - new Date().getTime())
+}
+    
 };
 
  
@@ -128,6 +134,8 @@ Simulator.prototype.getBall = (pos) => {
 
 Simulator.prototype.start = function( host_id ,client_id) {
    
+    this.is_running = true;
+
     this.host_id = host_id;
     this.client_id = client_id;
     this.paddles[host_id] = this.getPaddle(host_id, {x:this.world.width/8, y:this.world.height/2});
@@ -153,6 +161,16 @@ Simulator.prototype.start = function( host_id ,client_id) {
     let sim_type =  this.is_server ? 'Server' : 'Client';
     console.log(sim_type, ' simulation: ',this.id, ' started.');
 };
+
+
+Simulator.prototype.stop = function( ) { 
+   
+    this.is_running = false;
+
+    console.log('Server simulation: ', this.id, '  stopped.')
+    clearInterval(this._serverIntervalId);
+
+}
 
 Simulator.prototype.handleKeyPress = function(input) {
     //if(this.paddles.length == 0) return;
@@ -267,8 +285,8 @@ Simulator.prototype.update = function(dt) {
 
         if (this.is_server) {
             let ballDT = this.getDeltaTimeForBall(this.paddles);
-            this.ball = this.moveBall(this.ball.direction, this.ball, ballDT);
-            this.ball = this.checkBallWalls(this.ball, this.world, ballDT);
+            this.ball = this.moveBall(this.ball.direction, this.ball, dt);
+            this.ball = this.checkBallWalls(this.ball, this.world, dt);
             this.ball = this.checkBallPaddlesCollision(this.paddles, this.ball, dt);
         }
         
@@ -416,14 +434,12 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
 
 Simulator.prototype.resetBallLeft = function(ball, dt) {
     ball.pos = {x:0.75*this.world.width, y:this.world.height/2};
-    ball.old_pos = {x:0.75*this.world.width, y:this.world.height/2};
     ball.direction = {x: -1, y:0};
     return ball;
 }
   
 Simulator.prototype.resetBallRight = function(ball, dt) {
     ball.pos = {x:0.25*this.world.width, y:this.world.height/2};
-    ball.old_pos = {x:0.25*this.world.width, y:this.world.height/2};
     ball.direction = {x:1, y:0};
     return ball;
 }
@@ -438,14 +454,12 @@ Simulator.prototype.checkBallWalls = function(ball, world, dt) {
       
       //nudge
       newBall.pos.y = newBall.radius;
-      newBall.old_pos.y = newBall.radius;
     }
        
     if ( (newBall.pos.y + 0.5 * newBall.radius) > world.height ) {
       newBall.direction.y *= -1;
       
       newBall.pos.y = world.height - newBall.radius;
-      newBall.old_pos.y = world.height - newBall.radius;
     }
     
     const sidedBall = (ball) => {
