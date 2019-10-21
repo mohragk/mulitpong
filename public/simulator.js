@@ -244,13 +244,14 @@ Simulator.prototype.handleInput = function(input_buffer) {
     if(!this.paddles) return;
    
     let new_client_direction = 0;
-    if(this.key_state_client & KEY_UP) new_client_direction = -1;
-    if(this.key_state_client & KEY_DOWN) new_client_direction = 1;
+    if(this.key_state_client & KEY_UP) new_client_direction   += -1;
+    if(this.key_state_client & KEY_DOWN) new_client_direction += 1;
+
 
     
     let new_host_direction = 0;
-    if(this.key_state_host & KEY_UP) new_host_direction = -1;
-    if(this.key_state_host & KEY_DOWN) new_host_direction = 1;
+    if(this.key_state_host & KEY_UP) new_host_direction   += -1;
+    if(this.key_state_host & KEY_DOWN) new_host_direction += 1;
 
 
     this.paddles[this.host_id].direction = new_host_direction;
