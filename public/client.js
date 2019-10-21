@@ -355,12 +355,11 @@ function update(dt) {
 
 
 const drawPaddle = (paddle) => {
-    fill(255);
+    let col = paddle.id === player_id ? 'rgba(140, 255, 179, 1.0)' :'rgba(220, 220, 220, 1.0)' 
+    fill(col);
     rectMode(CENTER);
     rect(paddle.pos.x, paddle.pos.y, paddle.w, paddle.h);
 
-    //debug
-    text(paddle.id, paddle.pos.x, 20);
 }
 
 
@@ -400,6 +399,7 @@ function draw() {
         noFill();
         stroke(180);
         rect(ghost.pos.x, ghost.pos.y, ghost.w, ghost.h);
+        noStroke();
     }
     if(animator) animator.update(60/1000)
     div.html('<p>'+displayText+'</p>');
