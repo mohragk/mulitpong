@@ -305,7 +305,7 @@ function keyTyped() {
 // DRAWING
 
 const drawPaddle = (paddle) => {
-    let col = paddle.id === player_id ? 'rgba(140, 255, 179, 1.0)' :'rgba(220, 220, 220, 1.0)' 
+    let col = paddle.id === player_id ? 'rgba(53, 223, 109, 1.0)' :'rgba(220, 220, 220, 1.0)' 
     fill(col);
     rectMode(CENTER);
     rect(paddle.pos.x, paddle.pos.y, paddle.w, paddle.h);
