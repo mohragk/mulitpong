@@ -134,7 +134,7 @@ const handleServerUpdate = (server_state) => {
 
 function correctPosition(server_state) {
 
-    latency =  server_state.time - ( new Date().getTime() );
+    //latency =  server_state.time - ( new Date().getTime() );
 
     // get the total time that is saved in the history,
     let history_time = (history.length) ? history.reduce((a, b) => ({dt: a.dt + b.dt})).dt : 0;
