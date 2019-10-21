@@ -1,5 +1,4 @@
 
-
 const TAU = 6.28318530718;
 let socket;
 let displayText = '';
@@ -18,8 +17,6 @@ let latency = 0;
 let history = [];
 let last_server_state = {};
 //let net_delay = 10; //millis
-
-
 
 
 let div;
