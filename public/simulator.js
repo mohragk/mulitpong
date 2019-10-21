@@ -148,10 +148,12 @@ Simulator.prototype.start = function( host_id ,client_id) {
 
     this.host_id = host_id;
     this.client_id = client_id;
-    this.paddles[host_id] = this.getPaddle(host_id, {x:this.world.width/8, y:this.world.height/2});
-    this.paddles[client_id] = this.getPaddle(client_id, {x:this.world.width - (this.world.width/8), y:this.world.height/2});
-    this.ghosts[host_id] = this.getPaddle(host_id, {x:this.world.width/8, y:this.world.height/2});
-    this.ghosts[client_id] = this.getPaddle(client_id, {x:this.world.width - (this.world.width/8), y:this.world.height/2});
+
+    let denom = 12;
+    this.paddles[host_id] = this.getPaddle(host_id, {x:this.world.width/denom, y:this.world.height/2});
+    this.paddles[client_id] = this.getPaddle(client_id, {x:this.world.width - (this.world.width/denom), y:this.world.height/2});
+    this.ghosts[host_id] = this.getPaddle(host_id, {x:this.world.width/denom, y:this.world.height/2});
+    this.ghosts[client_id] = this.getPaddle(client_id, {x:this.world.width - (this.world.width/denom), y:this.world.height/2});
 
     this.ball = this.getBall({x:this.world.width/2, y:this.world.height/2});
 
