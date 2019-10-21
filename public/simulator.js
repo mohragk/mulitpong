@@ -72,15 +72,13 @@ Simulator.prototype.mainLoop = function() {
     //Store the last frame time
     this.lastframetime = t;
 
-   
+    if(this.is_running) {
+        this.handleInput(this.input_buffer);
 
-if(this.is_running) {
-    this.handleInput(this.input_buffer);
-
-    this.update(this.dt);
-    
-    setTimeout(this.mainLoop.bind(this), (t+this.dt) - new Date().getTime())
-}
+        this.update(this.dt);
+        
+        setTimeout(this.mainLoop.bind(this), (t+this.dt) - new Date().getTime())
+    }
     
 };
 
