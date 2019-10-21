@@ -309,6 +309,7 @@ function keyPressed() {
         simulator.handleKeyPress(input);
     }
     
+    return (keyCode !== 38 && keyCode !== 40) ; //prevent default behaviour
 }
     
 
@@ -327,6 +328,8 @@ function keyReleased() {
         simulator.handleKeyReleased(input);
         
     }
+
+    return (keyCode !== 38 && keyCode !== 40) ;
 }
 
 function update(dt) {
