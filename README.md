@@ -1,4 +1,4 @@
-# Multipong: a realtime NodeJS multiplayer version of Pong
+# Multipong: a realtime NodeJS multiplayer version of Pong...
 ...with a twist.
  
 ## Live demo
