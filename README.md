@@ -22,7 +22,7 @@ It works as follows.
 1. At every client-side update interval, the client-side adds a snapshot of it's acceleration, velocity and dt to a 'history buffer'. 
 2. When a new server state has arrived we calculate the length of time between the current state and the server state. Latency. 
 3. We then remove any snapshots from the history buffer that can be ignored because they are too old. 
-4. Using the historical, truthfull, position of the player as determined by the server x milliseconds ago, we calculate our new position using all of the history states in the buffer. Essentially rewriting history by adjusting the psoobily incorrect position of x milliseconds ago and end up to a more correctly predicted position.
+4. Using the historical, truthfull, position of the player as determined by the server x milliseconds ago, we calculate our new position using all of the history states in the buffer. Essentially rewriting history by adjusting the possibly incorrect position of x milliseconds ago and end up to a more correctly predicted position.
 
  
 ## Disclaimer
