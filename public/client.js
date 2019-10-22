@@ -319,6 +319,7 @@ function keyTyped() {
 
 const drawPaddle = (paddle) => {
     let col = paddle.id === player_id ? 'rgba(53, 223, 109, 1.0)' :'rgba(220, 220, 220, 1.0)' 
+    noStroke();
     fill(col);
     rectMode(CENTER);
     rect(paddle.pos.x, paddle.pos.y, paddle.w, paddle.h);
@@ -328,6 +329,7 @@ const drawPaddle = (paddle) => {
 
 const drawBall = (ball) => {
     fill(255);
+    noStroke();
     rectMode(CENTER);
     rect(ball.pos.x, ball.pos.y, ball.radius, ball.radius);
 
@@ -335,10 +337,11 @@ const drawBall = (ball) => {
 
 const drawScores = () => {
     fill(255);
+    noStroke();
     textSize(30);
     textAlign(CENTER);
-    text(score_host, width/8, 50);
-    text(score_client, width - (width/8), 50);
+    text(score_host, width/6, 50);
+    text(score_client, width - (width/6), 50);
 }
 
 const drawGhost = () => {
@@ -355,11 +358,12 @@ const drawGhost = () => {
 function draw() {
     background(10);
     if (state === 'running') {
+        drawScores();
 
         drawPaddle(simulator.paddles[host_id] );
         drawPaddle(simulator.paddles[client_id] );
 
-        drawScores();
+        
 
         drawBall(simulator.ball);
 

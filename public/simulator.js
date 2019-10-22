@@ -464,16 +464,26 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
   }
 
 
+
+
+function rand(start, end) {
+   
+   
+    return remap(Math.random(), 0, 1, start, end);
+}
+
+
+
 Simulator.prototype.resetBallLeft = function(ball, dt) {
     ball.pos = {x:0.75*this.world.width, y:this.world.height/2};
-    ball.direction = {x: -1, y:0};
+    ball.direction = {x: -1, y:rand(-0.3,0.3)};
     this.score_client++;
     return ball;
 }
   
 Simulator.prototype.resetBallRight = function(ball, dt) {
     ball.pos = {x:0.25*this.world.width, y:this.world.height/2};
-    ball.direction = {x:1, y:0};
+    ball.direction = {x:1, y:rand(-0.3,0.3)};
     this.score_host++;
     return ball;
 }
