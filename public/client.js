@@ -341,6 +341,14 @@ const drawScores = () => {
     text(score_client, width - (width/8), 50);
 }
 
+const drawGhost = () => {
+    let ghost = simulator.ghosts[player_id];
+    noFill();
+    stroke(180);
+    rect(ghost.pos.x, ghost.pos.y, ghost.w, ghost.h);
+    noStroke();
+}
+
 // END
 // **********
 
@@ -355,11 +363,7 @@ function draw() {
 
         drawBall(simulator.ball);
 
-        let ghost = simulator.ghosts[player_id];
-        noFill();
-        stroke(180);
-        rect(ghost.pos.x, ghost.pos.y, ghost.w, ghost.h);
-        noStroke();
+        
 
         
     }
