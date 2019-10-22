@@ -18,6 +18,10 @@ var Simulator = function(id, player_id, client_id, io) {
     this.is_server = false;
     this.host_id = player_id;
     this.client_id = -1;
+    
+    this.score_client = 0;
+    this.score_host = 0;
+
     this.world = {
         width:  800,
         height: 600
@@ -157,6 +161,9 @@ Simulator.prototype.start = function( host_id ,client_id) {
 
     this.ball = this.getBall({x:this.world.width/2, y:this.world.height/2});
 
+    this.score_client = 0;
+    this.score_host = 0;
+
     if (typeof global !== 'undefined') {
         
         this._serverIntervalId = setInterval(this.send_state.bind(this), 18); 
@@ -252,7 +259,9 @@ Simulator.prototype.send_state = function(dt) {
         let  server_state = {
             time: 0,
             paddles: {},
-            ball: {}
+            ball: {},
+            score_client: this.score_client,
+            score_host:   this.score_host,
         };  // <- initialize an object, not an array
 
         server_state.paddles[this.host_id]   = this.paddles[this.host_id];
@@ -458,12 +467,14 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
 Simulator.prototype.resetBallLeft = function(ball, dt) {
     ball.pos = {x:0.75*this.world.width, y:this.world.height/2};
     ball.direction = {x: -1, y:0};
+    this.score_client++;
     return ball;
 }
   
 Simulator.prototype.resetBallRight = function(ball, dt) {
     ball.pos = {x:0.25*this.world.width, y:this.world.height/2};
     ball.direction = {x:1, y:0};
+    this.score_host++;
     return ball;
 }
 

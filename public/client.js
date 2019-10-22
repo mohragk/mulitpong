@@ -40,6 +40,9 @@ let other_id;
 let host_id;
 let client_id;
 
+let score_host;
+let score_client;
+
 var my_server_pos_y = 0;
 
 let latency = 0;
@@ -48,6 +51,11 @@ let last_server_state = {};
 
 let div;
 
+
+let font;
+function preload() {
+  font = loadFont('assets/Square.ttf');
+}
 
 
 function setup() {
@@ -66,6 +74,7 @@ function setup() {
     //socket.on('notification', changeNotification);
     input_seq = 0;
     div = createDiv('');
+    textFont(font);
 }
 
 
@@ -146,13 +155,17 @@ function update(dt) {
     )
     
     if(last_server_state.time) {
+
+
         // Predict player position and correct with server data
         correctPosition(last_server_state);
 
         // Interpolate other entities position.
         interpolateOtherEntities(last_server_state);
 
-       
+       //update score
+       score_host =  last_server_state.score_host;
+       score_client = last_server_state.score_client;
     }
 }
 
@@ -320,6 +333,14 @@ const drawBall = (ball) => {
 
 }
 
+const drawScores = () => {
+    fill(255);
+    textSize(30);
+    textAlign(CENTER);
+    text(score_host, width/8, 50);
+    text(score_client, width - (width/8), 50);
+}
+
 // END
 // **********
 
@@ -329,6 +350,8 @@ function draw() {
 
         drawPaddle(simulator.paddles[host_id] );
         drawPaddle(simulator.paddles[client_id] );
+
+        drawScores();
 
         drawBall(simulator.ball);
 
