@@ -328,10 +328,12 @@ const drawPaddle = (paddle) => {
 
 
 const drawBall = (ball) => {
+    let ww = map(simulator.ball_dt, 0, 0.0018, 0, 10)
+    
     fill(255);
     noStroke();
     rectMode(CENTER);
-    rect(ball.pos.x, ball.pos.y, ball.radius, ball.radius);
+    rect(ball.pos.x, ball.pos.y, ball.radius + ww, ball.radius);
 
 }
 

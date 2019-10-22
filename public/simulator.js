@@ -29,6 +29,7 @@ var Simulator = function(id, player_id, client_id, io) {
     this.paddles = [];
     this.ghosts = [];
     this.ball;
+    this.ball_dt = 0;
 
     this.debug_text = '';
     this.socket;
@@ -317,8 +318,9 @@ Simulator.prototype.update = function(dt) {
         this.paddles[this.host_id]   = this.solvePaddle(this.paddles[this.host_id], dt);
         this.paddles[this.client_id] = this.solvePaddle(this.paddles[this.client_id], dt);
 
-        if (this.is_server) {
+        if (true) {//this.is_server) {
             let ballDT = this.getDeltaTimeForBall(this.paddles);
+            this.ball_dt = ballDT;
             this.ball = this.moveBall(this.ball.direction, this.ball, ballDT);
             this.ball = this.checkBallWalls(this.ball, this.world, ballDT);
             this.ball = this.checkBallPaddlesCollision(this.paddles, this.ball, dt);
