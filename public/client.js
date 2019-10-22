@@ -202,7 +202,7 @@ function correctPosition(server_state) {
     
     // delete entries that are too old
     if (index_to_delete_upto) {
-        history = history.slice(index_to_delete_upto, history.lenght -1);
+        history = history.slice(index_to_delete_upto, history.length -1);
     }
 
     
