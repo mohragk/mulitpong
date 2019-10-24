@@ -52,6 +52,12 @@ let last_server_state = {};
 let div;
 
 
+// AUDIO
+let audio_osc;
+let audio_envelope, pitch_envelope;
+let reverb, delay;
+
+
 let font;
 function preload() {
   font = loadFont('assets/Square.ttf');
@@ -75,8 +81,62 @@ function setup() {
     input_seq = 0;
     div = createDiv('');
     textFont(font);
+
+
+    // audio
+    initAudio();
 }
 
+
+function initAudio() {
+    
+
+    audio_envelope = new p5.Envelope();
+    audio_envelope.setADSR(0.01, 0.1, 0.0, 0.1);
+    audio_envelope.setRange(0.07, 0.0);
+
+    pitch_envelope = new p5.Envelope();
+    pitch_envelope.setADSR(0.01, 0.07, 0.0, 0.1);
+    pitch_envelope.setRange(120,0);
+
+    audio_osc = new p5.Oscillator(140);
+    audio_osc.setType('square');
+    audio_osc.freq(pitch_envelope);
+    audio_osc.amp(audio_envelope);
+    audio_osc.start();
+
+
+    delay = new p5.Delay();
+    delay.amp(0.02)
+    delay.process(audio_osc, 0.5,0.1, 1000);
+}
+let sound_already_triggered = false;
+function triggerOsc() {
+   
+    if (!sound_already_triggered) {
+        audio_envelope.triggerAttack();
+        pitch_envelope.ramp(audio_osc, 0, 100, 0);
+        sound_already_triggered = true;
+        console.log('ouch')
+
+        setTimeout(()=> {sound_already_triggered = false}, 300)
+    }
+    
+}
+
+
+const pitchEnvelope = (osc, freq, a, d, pointyness) => {
+    let now = getAudioContext().currentTime;
+    
+    
+    let f = freq;
+    osc.frequency.cancelScheduledValues(0);
+    osc.frequency.setValueAtTime(f, now);
+    osc.frequency.linearRampToValueAtTime(f+pointyness, now + a);
+    osc.frequency.linearRampToValueAtTime(f, now + a + d);
+    
+    return osc;
+  }
 
 // ****************  
 // SOCKET CALLBACKS
@@ -166,6 +226,10 @@ function update(dt) {
        //update score
        score_host =  last_server_state.score_host;
        score_client = last_server_state.score_client;
+
+
+       // AUDIO
+       if(last_server_state.ball.did_collide) triggerOsc();
     }
 }
 
@@ -365,14 +429,8 @@ function draw() {
         drawPaddle(simulator.paddles[host_id] );
         drawPaddle(simulator.paddles[client_id] );
 
-        
-
-        drawBall(simulator.ball);
-
-        
-
-        
+        drawBall(simulator.ball); 
     }
-  
+    
     div.html('<p>'+displayText+'</p>');
 }

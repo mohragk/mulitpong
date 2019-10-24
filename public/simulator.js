@@ -285,7 +285,8 @@ Simulator.prototype.send_state = function(dt) {
             this.io.to('game_room'+this.id).emit('serverupdate', server_state);
         }
         
-       
+       // little bit annoying, but reset collided flag on ball
+       this.ball.did_collide = false;
         
     }
 }
@@ -444,7 +445,6 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
     }
     
       
-
         let result = this.solveBallPaddleCollision(newBall, paddles[this.client_id], dt);
         newBall = result.newBall;
 
@@ -452,7 +452,10 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
         if (result.haveCollided){
             let newDir = getBounceDirection(paddles[this.client_id], newBall);
             newBall.direction = newDir;
+            newBall.did_collide = true;
         }
+
+
 
         let result_b = this.solveBallPaddleCollision(newBall, paddles[this.host_id], dt);
         newBall = result_b.newBall;
@@ -460,6 +463,7 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
         if (result_b.haveCollided){
             let newDir = getBounceDirection(paddles[this.host_id], newBall);
             newBall.direction = newDir;
+            newBall.did_collide = true;
         }
   
     return newBall;
