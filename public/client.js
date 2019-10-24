@@ -114,6 +114,8 @@ let sound_already_triggered = false;
 function triggerOsc() {
    
     if (!sound_already_triggered) {
+        audio_osc.freq().value = random(70, 140);
+        // /console.log(ding)
         audio_envelope.triggerAttack();
         pitch_envelope.ramp(audio_osc, 0, 100, 0);
         sound_already_triggered = true;
@@ -186,6 +188,8 @@ const initSimulator = (data) => {
 
     let t = new Date().getTime();
     socket.emit('pingserver', {time:t})
+
+    initAudio();
 }
 
 
