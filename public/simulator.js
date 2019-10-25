@@ -40,6 +40,10 @@ var Simulator = function(id, player_id, client_id, io) {
     this._dt = new Date().getTime();    //The local timer delta
     this._dte = new Date().getTime();   //The local timer last frame time
     this.dt = 0.016;
+    this.last_server_state;
+    this.latency = 0;
+
+    this.history = [];
 
     this.is_running = false;
 
@@ -235,26 +239,6 @@ Simulator.prototype.handleKeyReleased = function(input) {
 
 };
 
-Simulator.prototype.handleInput = function(input_buffer) {
-    if(!this.paddles) return;
-   
-    let new_client_direction = 0;
-    if(this.key_state_client & KEY_UP) new_client_direction   += -1;
-    if(this.key_state_client & KEY_DOWN) new_client_direction += 1;
-    if( (this.key_state_client & (KEY_UP | KEY_DOWN)) == (KEY_UP | KEY_DOWN)) new_client_direction = 0;
-
-    
-    let new_host_direction = 0;
-    if(this.key_state_host & KEY_UP) new_host_direction   += -1;
-    if(this.key_state_host & KEY_DOWN) new_host_direction += 1;
-    if( (this.key_state_host & (KEY_UP | KEY_DOWN)) == (KEY_UP | KEY_DOWN)) new_host_direction = 0;
-
-    this.paddles[this.host_id].direction = new_host_direction;
-    this.paddles[this.client_id].direction = new_client_direction;
-
-    
-}
-
 Simulator.prototype.send_state = function(dt) { 
     
     if(typeof this.io !== 'undefined') {
@@ -294,6 +278,92 @@ Simulator.prototype.send_state = function(dt) {
 }
 
 
+Simulator.prototype.handleServerUpdate = function(server_state) {
+    this.last_server_state = server_state;
+} 
+
+
+Simulator.prototype.client_update = function(dt) {
+
+    
+    
+    if(last_server_state.time) {
+
+
+        // Predict player position and correct with server data
+        correctPosition(last_server_state);
+
+        /*
+        // Interpolate other entities position.
+        interpolateOtherEntities(last_server_state);
+
+       //update score
+       score_host =  last_server_state.score_host;
+       score_client = last_server_state.score_client;
+        */
+    }
+}
+
+
+function correctPosition(server_state) {
+
+    this.latency =  server_state.time - ( new Date().getTime() );
+
+    // get the total time that is saved in the history,
+    let history_time = (history.length) ? history.reduce((a, b) => ({dt: a.dt + b.dt})).dt : 0;
+    history_time *= 1000;
+    // get index to split history up to
+    let index_to_delete_upto = Math.floor(history_time - latency) ;
+    
+    // delete entries that are too old
+    if (index_to_delete_upto) {
+        this.history = this.history.slice(index_to_delete_upto, this.history.length -1);
+    }
+
+    return;
+    //Our latest server position
+    my_server_pos_y = server_state.paddles[player_id].pos.y;
+
+    //Update the debug server position ghost
+    simulator.ghosts[player_id].pos.y = my_server_pos_y;
+
+    // call the simulator solvePaddle function, with our actual, 
+    // historical position and apply 
+    let adjusted_paddle = cloneObject(simulator.paddles[player_id] );
+    adjusted_paddle.pos.y = my_server_pos_y;
+   
+    const solveDeltaPosition = (paddle, acc, vel, dir, dt) => {
+       
+        let acc_y = acc * dir;
+        acc_y -= vel * 10;
+        paddle.velocity.y =   vel + acc_y * dt;
+
+        let old_pos = paddle.pos.y;
+        let new_pos = solvePosition(old_pos, paddle.velocity.y, acc_y, dt);
+    
+        let half = paddle.h /2;
+        new_pos = (new_pos < half) ? half : new_pos; //check oob
+        new_pos = (new_pos > height - half) ? height-half : new_pos; //check oob
+
+        
+        return  old_pos - new_pos;
+    }
+
+    // accumulate delta Pos based on history
+    let new_pos_delta = 0;
+    for (let i = 0; i < history.length; i++) {
+    
+        new_pos_delta += solveDeltaPosition(adjusted_paddle, history[i].acc, history[i].vel, adjusted_paddle.direction, history[i].dt);
+        
+        //displayText = new_pos_delta;
+    }
+    if(new_pos_delta < 1.1) {
+        adjusted_paddle.pos.y += new_pos_delta;
+    }
+    
+    simulator.paddles[player_id] =  cloneObject( adjusted_paddle );
+}
+
 Simulator.prototype.solvePaddle = function(paddle, dt) {
     let acc = paddle.acceleration * paddle.direction;
 
@@ -332,6 +402,20 @@ Simulator.prototype.update = function(dt) {
 
         steps--;
     }
+
+    if (!this.isServer) {
+        //if a client instance, save a history
+        let player_paddle = this.paddles[player_id]; //dunno
+        this.history.push(
+            {
+                vel: player_paddle.velocity.y, //only interested in y
+                acc: player_paddle.acceleration,
+                dir: player_paddle.direction,
+                dt: dt.fixed(4) //millis!
+            }
+        )
+    }
+    
 };
 
 Simulator.prototype.getDeltaTimeForBall = function(paddles) {
