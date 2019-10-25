@@ -111,10 +111,11 @@ function initAudio() {
     delay.process(audio_osc, 0.5,0.1, 1000);
 }
 let sound_already_triggered = false;
-function triggerOsc() {
+function triggerOsc(mapping) {
    
     if (!sound_already_triggered) {
-        audio_osc.freq().value = random(70, 140);
+        //let mapping = -0.3;
+        audio_osc.freq().value = map(mapping, -1, 1, 70, 140);
         // /console.log(ding)
         audio_envelope.triggerAttack();
         pitch_envelope.ramp(audio_osc, 0, 100, 0);
@@ -233,7 +234,10 @@ function update(dt) {
 
 
        // AUDIO
-       if(last_server_state.ball.did_collide) triggerOsc();
+       if(last_server_state.ball.did_collide) {
+        let mapping = last_server_state.ball.collision_mapping;
+        triggerOsc(mapping);
+       } 
     }
 }
 

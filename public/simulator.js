@@ -126,7 +126,9 @@ Simulator.prototype.getPaddle = function(id,pos) {
           direction: 0,
           velocity: {x:0, y:0},
           acceleration: 7000,
-          score: 0
+          score: 0, 
+          did_collide: false,
+          collision_mapping: 0
         }
       )
 };
@@ -440,7 +442,7 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
         
         v.x = paddle.pos.x > 0.5 * this.world.width ? v.x *-1 : v.x;
         
-        return v;
+        return {vector:v, mapping:paddleLerp};
         
     }
     
@@ -451,8 +453,9 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
   
         if (result.haveCollided){
             let newDir = getBounceDirection(paddles[this.client_id], newBall);
-            newBall.direction = newDir;
+            newBall.direction = newDir.vector;
             newBall.did_collide = true;
+            newBall.collision_mapping = newDir.mapping;
         }
 
 
@@ -462,8 +465,9 @@ Simulator.prototype.checkBallPaddlesCollision = function (paddles, ball, dt) {
   
         if (result_b.haveCollided){
             let newDir = getBounceDirection(paddles[this.host_id], newBall);
-            newBall.direction = newDir;
+            newBall.direction = newDir.vector;
             newBall.did_collide = true;
+            newBall.collision_mapping = newDir.mapping;
         }
   
     return newBall;
